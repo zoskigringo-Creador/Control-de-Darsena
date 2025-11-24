@@ -14,35 +14,51 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Librería PapaParse para Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <!-- SweetAlert2 para alertas bonitas tipo iOS -->
+    <!-- SweetAlert2 para alertas bonitas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- LIBRERÍA ESCÁNER CÁMARA -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         /* --- ESTILO iOS --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #F2F2F7; /* Gris sistema iOS */
+            background-color: #F2F2F7;
             -webkit-tap-highlight-color: transparent;
             color: #1C1C1E;
             overscroll-behavior-y: none;
         }
         .btn-ios { transition: transform 0.1s ease, opacity 0.2s ease; }
-        .btn-ios:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-ios:active { transform: scale(0.97); opacity: 0.9; }
+        
         .card { background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        
         .input-ios { background: #E5E5EA; border: none; border-radius: 10px; transition: all 0.3s; }
         .input-ios:focus { background: #FFFFFF; box-shadow: 0 0 0 2px var(--theme-color); outline: none; }
+        
+        /* Selector Tipo */
+        .segment-control { background: #E5E5EA; padding: 4px; border-radius: 12px; display: flex; }
+        .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 11px; font-weight: 600; border-radius: 8px; color: #8E8E93; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .segment-btn.active { background: white; color: var(--theme-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         .screen { display: none; animation: fadeIn 0.3s ease-out; }
         .screen.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .modal-exit { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+        
         :root { --theme-color: #007AFF; --theme-light: #E0F0FF; }
         .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilos Escáner */
+        #reader video { object-fit: cover; border-radius: 16px; }
     </style>
     <script>
         tailwind.config = { theme: { extend: { colors: { theme: 'var(--theme-color)', 'theme-light': 'var(--theme-light)', } } } }
@@ -50,27 +66,21 @@
 </head>
 <body class="h-screen w-full overflow-hidden flex flex-col">
 
-    <!-- PANTALLA LOGIN -->
+    <!-- LOGIN -->
     <div id="screen-login" class="screen active h-full w-full flex-col items-center justify-center p-6 bg-white z-50 absolute inset-0">
         <div class="w-full max-w-sm flex flex-col items-center">
             <div class="w-24 h-24 rounded-3xl bg-theme flex items-center justify-center shadow-xl mb-8 shadow-theme/30">
                 <i data-lucide="box-select" class="text-white w-12 h-12"></i>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-2">Control Dársena</h1>
-            
-            <!-- Estado BD -->
             <div id="dbStatus" class="flex items-center justify-center gap-2 text-gray-400 text-xs font-medium bg-gray-50 py-1 px-3 rounded-full mx-auto w-fit border border-gray-200 mb-8">
-                <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div>
-                <span id="dbStatusText">Conectando BD...</span>
+                <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div><span id="dbStatusText">Conectando BD...</span>
             </div>
-
             <div class="w-full space-y-4">
                 <div class="bg-gray-50 p-1 rounded-2xl border border-gray-100">
                     <input type="number" id="login-code" placeholder="Ingresa tu código" class="w-full bg-white p-4 rounded-xl text-center text-2xl font-bold outline-none shadow-sm focus:ring-2 focus:ring-theme transition-all" inputmode="numeric" autocomplete="off">
                 </div>
-                <button onclick="doLogin()" id="btnLogin" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/20 btn-ios flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
-                    Ingresar <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                </button>
+                <button onclick="doLogin()" id="btnLogin" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/20 btn-ios flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>Ingresar <i data-lucide="arrow-right" class="w-5 h-5"></i></button>
             </div>
             <div class="mt-12 flex flex-wrap justify-center gap-3 text-xs text-gray-400">
                 <span>1. Fabio</span><span>2. Javier</span><span>3. Victor</span><span>4. Brian</span><span>5. Rodrigo</span><span>6. Marcelo</span>
@@ -80,94 +90,91 @@
 
     <!-- APP PRINCIPAL -->
     <div id="screen-app" class="screen h-full w-full flex-col bg-[#F2F2F7] relative hidden">
-        <div class="bg-white pt-safe-top pb-2 px-4 shadow-sm z-10 sticky top-0">
+        <div class="bg-white pt-safe-top pb-2 px-4 shadow-sm z-20 sticky top-0">
             <div class="flex justify-between items-end pb-2">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Hola,</p>
-                    <h2 id="user-name-display" class="text-2xl font-bold text-gray-900 leading-none">Usuario</h2>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-theme font-bold text-lg" id="user-avatar">U</div>
+                <div><p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Auditor</p><h2 id="user-name-display" class="text-xl font-bold text-gray-900 leading-none">Usuario</h2></div>
+                <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-theme font-bold text-lg" id="user-avatar">U</div>
             </div>
         </div>
 
         <div id="main-content" class="flex-1 overflow-y-auto relative no-scrollbar">
             <!-- VISTA HOME -->
-            <div id="view-home" class="view-section p-4 space-y-4 min-h-full pb-24">
-                <div class="sticky top-0 z-20 py-2 bg-[#F2F2F7]/95 backdrop-blur-sm">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
-                        <input type="text" id="search-input" onkeyup="filtrar()" placeholder="Buscar por código, nombre..." class="w-full bg-[#E5E5EA] pl-10 pr-4 py-2.5 rounded-xl text-gray-800 placeholder-gray-500 font-medium focus:bg-white transition-all outline-none">
+            <div id="view-home" class="view-section space-y-4 min-h-full pb-28">
+                <!-- Panel Operación -->
+                <div class="bg-white p-4 rounded-b-3xl shadow-sm mb-2 sticky top-0 z-10">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nº Dársena</label><input type="text" id="op-darsena" class="w-full input-ios p-3 text-center font-bold text-gray-800" placeholder="00" onchange="saveOpData()"></div>
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nº Camión</label><input type="text" id="op-camion" class="w-full input-ios p-3 text-center font-bold text-gray-800" placeholder="0000" onchange="saveOpData()"></div>
+                    </div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1 block">Motivo Principal</label>
+                    <div class="segment-control">
+                        <button onclick="setIncidenceType('Sobrante de mercaderia')" class="segment-btn active" id="btn-type-sobrante">Sobrante</button>
+                        <button onclick="setIncidenceType('Inversion de mercaderia')" class="segment-btn" id="btn-type-inversion">Inversión</button>
+                        <button onclick="setIncidenceType('Faltante en caja cerrada')" class="segment-btn" id="btn-type-faltante">Faltante Caja</button>
                     </div>
                 </div>
-                <div id="db-empty-state" class="hidden flex flex-col items-center justify-center py-10 text-center">
+
+                <!-- Buscador y Botón Cámara -->
+                <div class="px-4 flex gap-2">
+                    <div class="relative shadow-sm flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="search-input" onkeyup="handleSearch(event)" placeholder="Buscar producto..." class="w-full bg-white pl-10 pr-4 py-3 rounded-xl text-gray-800 font-medium focus:ring-2 focus:ring-theme transition-all outline-none" autocomplete="off">
+                        <button onclick="limpiarBuscador()" id="clear-search" class="absolute right-3 top-3 text-gray-400 hidden"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
+                    </div>
+                    <button onclick="startScanner()" class="bg-theme text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-theme/30 btn-ios">
+                        <i data-lucide="scan" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div id="db-empty-state" class="hidden flex flex-col items-center justify-center py-10 text-center px-4">
                     <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4"><i data-lucide="database" class="w-8 h-8 text-gray-400"></i></div>
                     <h3 class="text-lg font-bold text-gray-700">Base de datos vacía</h3>
-                    <p class="text-gray-500 text-sm mb-4 max-w-[200px]">No hay productos cargados.</p>
+                    <p class="text-gray-500 text-sm mb-4">Conecta tu Excel para empezar.</p>
                     <button onclick="irAConfiguracion()" class="text-theme font-bold text-sm">Ir a Configuración</button>
                 </div>
-                <div id="product-list" class="space-y-3"></div>
+
+                <div id="product-list" class="space-y-3 px-4"></div>
             </div>
 
             <!-- VISTA SETTINGS -->
             <div id="view-settings" class="view-section p-4 space-y-6 min-h-full pb-24 hidden">
                 <h2 class="text-2xl font-bold px-2">Opciones</h2>
                 <div class="space-y-2">
-                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Personalización</p>
-                    <div class="card overflow-hidden">
-                        <div class="p-4 flex justify-between items-center border-b border-gray-100">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-theme flex items-center justify-center text-white"><i data-lucide="palette" class="w-5 h-5"></i></div>
-                                <span class="font-medium">Color del Tema</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="setTheme('#007AFF')" class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
-                                <button onclick="setTheme('#5856D6')" class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
-                                <button onclick="setTheme('#FF9500')" class="w-6 h-6 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
-                            </div>
-                        </div>
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Base de Datos</p>
+                    <div class="card overflow-hidden divide-y divide-gray-100">
+                        <button onclick="abrirGestionDB()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gray-500 flex items-center justify-center text-white"><i data-lucide="database" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Conectar Excel</span><span class="text-xs text-gray-400" id="db-count-label">0 productos</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Gestión</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Gestión del Día</p>
                     <div class="card overflow-hidden divide-y divide-gray-100">
                         <button onclick="verReporte()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white"><i data-lucide="file-text" class="w-5 h-5"></i></div>
-                                <span class="font-medium">Ver Reportes</span>
-                            </div>
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white"><i data-lucide="file-text" class="w-5 h-5"></i></div><span class="font-medium">Ver Reportes</span></div>
                             <div class="flex items-center gap-2"><span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-md" id="badge-count">0</span><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i></div>
                         </button>
                         <button onclick="descargarExcel()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white"><i data-lucide="share" class="w-5 h-5"></i></div>
-                                <span class="font-medium">Exportar Excel</span>
-                            </div>
-                            <i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
-                        </button>
-                        <button onclick="abrirGestionDB()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-gray-500 flex items-center justify-center text-white"><i data-lucide="database" class="w-5 h-5"></i></div>
-                                <div class="flex flex-col"><span class="font-medium">Base de Datos</span><span class="text-xs text-gray-400" id="db-count-label">0 productos</span></div>
-                            </div>
-                            <i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white"><i data-lucide="share" class="w-5 h-5"></i></div><span class="font-medium">Exportar Excel</span></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <div class="card overflow-hidden">
-                        <button onclick="cerrarSesion()" class="w-full p-4 flex items-center justify-center gap-2 text-red-500 font-bold btn-ios">Cerrar Sesión</button>
-                    </div>
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Apariencia</p>
+                    <div class="card overflow-hidden"><div class="p-4 flex justify-between items-center"><span class="font-medium ml-2">Color del Tema</span><div class="flex gap-2"><button onclick="setTheme('#007AFF')" class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#5856D6')" class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#FF9500')" class="w-6 h-6 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button></div></div></div>
                 </div>
-                <p class="text-center text-gray-400 text-xs pt-4">Control Dársena v3.2</p>
+                <div class="space-y-2 pt-4"><button onclick="cerrarSesion()" class="w-full p-4 bg-white rounded-xl text-red-500 font-bold btn-ios shadow-sm">Cerrar Sesión</button></div>
+                <p class="text-center text-gray-400 text-xs pt-4 pb-10">Control Dársena v5.0</p>
             </div>
         </div>
 
+        <!-- Bottom Nav -->
         <div class="bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe-bottom fixed bottom-0 w-full z-40 flex justify-around items-center h-16 max-w-[600px]">
             <button onclick="switchTab('home')" id="tab-home" class="flex flex-col items-center justify-center w-full h-full text-theme btn-ios"><i data-lucide="scan-barcode" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-medium">Registrar</span></button>
             <button onclick="switchTab('settings')" id="tab-settings" class="flex flex-col items-center justify-center w-full h-full text-gray-400 btn-ios"><i data-lucide="settings-2" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-medium">Opciones</span></button>
         </div>
 
-        <!-- MODALES -->
+        <!-- MODAL REGISTRO -->
         <div id="modal-registro" class="fixed inset-0 z-50 hidden">
             <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onclick="cerrarModalRegistro()"></div>
             <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 shadow-2xl modal-enter max-w-[600px] left-0 right-0 mx-auto">
@@ -180,51 +187,45 @@
                     </div>
                     <button onclick="cerrarModalRegistro()" class="bg-gray-100 p-2 rounded-full text-gray-500"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
+                <div class="mb-6 bg-theme-light text-theme px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i><span id="modal-type-label">Sobrante de mercaderia</span></div>
                 <div class="space-y-6">
                     <div class="flex items-center justify-between bg-gray-50 p-2 rounded-2xl border border-gray-100">
                         <button onclick="updateQty(-1)" class="w-14 h-14 bg-white rounded-xl shadow-sm text-2xl font-bold text-gray-600 flex items-center justify-center active:scale-90 transition">-</button>
                         <input type="number" id="input-qty" class="bg-transparent text-center text-4xl font-bold w-full outline-none text-gray-800" placeholder="0" inputmode="numeric">
                         <button onclick="updateQty(1)" class="w-14 h-14 bg-theme rounded-xl shadow-sm text-2xl font-bold text-white flex items-center justify-center active:scale-90 transition">+</button>
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1 mb-2 block">Motivo / Observación</label>
-                        <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                            <span onclick="setObs('Mal Armado')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Mal Armado</span>
-                            <span onclick="setObs('Espacio')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Espacio</span>
-                            <span onclick="setObs('Picking')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Picking</span>
-                        </div>
-                        <textarea id="input-obs" class="w-full bg-gray-50 rounded-xl p-3 text-sm border border-gray-200 outline-none focus:ring-2 focus:ring-theme/20 transition-all" rows="2" placeholder="Escribir detalle..."></textarea>
-                    </div>
-                    <button onclick="guardar()" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/30 btn-ios">Confirmar Registro</button>
+                    <button onclick="guardar()" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/30 btn-ios flex justify-center items-center gap-2">Confirmar <i data-lucide="check" class="w-5 h-5"></i></button>
                 </div>
             </div>
         </div>
 
+        <!-- MODAL SCANNER (CAMARA) -->
+        <div id="modal-scanner" class="fixed inset-0 z-50 hidden bg-black flex flex-col">
+            <div class="flex justify-between items-center p-4 bg-black text-white z-10">
+                <h3 class="font-bold">Escanear Código</h3>
+                <button onclick="stopScanner()" class="bg-gray-800 p-2 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="reader" class="flex-1 w-full bg-black"></div>
+            <div class="p-6 bg-black text-white text-center text-sm text-gray-400">Apunta la cámara al código de barras</div>
+        </div>
+
+        <!-- MODAL DB -->
         <div id="modal-db" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="cerrarModalDB()"></div>
             <div class="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl scale-95 opacity-0 transition-all duration-200" id="modal-db-content">
-                <h3 class="text-lg font-bold mb-4 text-gray-900">Gestionar Base de Datos</h3>
+                <h3 class="text-lg font-bold mb-4 text-gray-900">Conectar Base de Datos</h3>
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Enlace Google Sheets (CSV)</label>
-                        <input type="text" id="db-url-input" placeholder="Pega tu enlace aquí..." class="w-full input-ios p-3 text-sm text-gray-800">
-                        <p class="text-[10px] text-gray-400 mt-1">Usa el link 'Publicar en la web' > CSV</p>
-                    </div>
-                    <div class="relative py-2"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div><div class="relative flex justify-center"><span class="bg-white px-2 text-xs text-gray-400">O</span></div></div>
-                    <button onclick="borrarBaseDatos()" class="w-full py-3 text-sm font-bold text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">Borrar Base de Datos Local</button>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Enlace Google Sheets (CSV)</label><input type="text" id="db-url-input" placeholder="Pega tu enlace aquí..." class="w-full input-ios p-3 text-sm text-gray-800"></div>
+                    <button onclick="borrarBaseDatos()" class="w-full py-3 text-sm font-bold text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">Desconectar y Borrar</button>
                 </div>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button onclick="cerrarModalDB()" class="px-4 py-2 text-gray-500 font-bold text-sm">Cancelar</button>
-                    <button onclick="guardarConfigDB()" class="px-6 py-2 bg-theme text-white rounded-lg font-bold text-sm shadow-lg shadow-theme/20 btn-ios">Conectar</button>
-                </div>
+                <div class="mt-6 flex justify-end gap-2"><button onclick="cerrarModalDB()" class="px-4 py-2 text-gray-500 font-bold text-sm">Cancelar</button><button onclick="guardarConfigDB()" class="px-6 py-2 bg-theme text-white rounded-lg font-bold text-sm shadow-lg shadow-theme/20 btn-ios">Conectar</button></div>
             </div>
         </div>
 
+        <!-- MODAL REPORTES -->
         <div id="modal-reportes" class="fixed inset-0 z-50 hidden bg-[#F2F2F7]">
             <div class="bg-white pt-safe-top pb-2 px-4 shadow-sm sticky top-0 z-10 flex justify-between items-center h-16">
-                <button onclick="cerrarReportes()" class="flex items-center text-theme font-medium gap-1"><i data-lucide="chevron-left"></i> Volver</button>
-                <h2 class="font-bold text-lg">Reportes</h2>
-                <div class="w-16"></div>
+                <button onclick="cerrarReportes()" class="flex items-center text-theme font-medium gap-1"><i data-lucide="chevron-left"></i> Volver</button><h2 class="font-bold text-lg">Reportes</h2><div class="w-16"></div>
             </div>
             <div id="lista-registros-container" class="p-4 space-y-3 overflow-y-auto h-[calc(100%-64px)] pb-24"></div>
         </div>
@@ -232,253 +233,161 @@
 
     <script>
         const USERS = { 1: "Fabio Vera", 2: "Javier Insfran", 3: "Victor Varga", 4: "Brian Quintana", 5: "Rodrigo Cabrera", 6: "Marcelo Diaz" };
-        let currentUser = null;
-        let productsDB = [];
-        let registers = [];
-        let selectedProd = null;
+        let currentUser = null, productsDB = [], registers = [], selectedProd = null;
+        let opDarsena = "", opCamion = "", opType = "Sobrante de mercaderia";
+        let html5QrcodeScanner = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            loadState();
+            lucide.createIcons(); loadState(); loadOpData();
             const savedUser = localStorage.getItem('darsena_user');
             if(savedUser) loginUser(JSON.parse(savedUser));
         });
 
-        function doLogin() {
-            const code = parseInt(document.getElementById('login-code').value);
-            if (USERS[code]) {
-                loginUser({ id: code, name: USERS[code] });
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Código incorrecto', confirmButtonColor: 'var(--theme-color)', timer: 1500, showConfirmButton: false });
-            }
+        function setIncidenceType(type) {
+            opType = type;
+            document.getElementById('btn-type-sobrante').classList.remove('active');
+            document.getElementById('btn-type-inversion').classList.remove('active');
+            document.getElementById('btn-type-faltante').classList.remove('active');
+            if(type.includes('Sobrante')) document.getElementById('btn-type-sobrante').classList.add('active');
+            else if(type.includes('Inversion')) document.getElementById('btn-type-inversion').classList.add('active');
+            else document.getElementById('btn-type-faltante').classList.add('active');
+            localStorage.setItem('darsena_op_type', type);
+        }
+        function saveOpData() { opDarsena = document.getElementById('op-darsena').value; opCamion = document.getElementById('op-camion').value; localStorage.setItem('darsena_op_darsena', opDarsena); localStorage.setItem('darsena_op_camion', opCamion); }
+        function loadOpData() { opDarsena = localStorage.getItem('darsena_op_darsena') || ""; opCamion = localStorage.getItem('darsena_op_camion') || ""; opType = localStorage.getItem('darsena_op_type') || "Sobrante de mercaderia"; document.getElementById('op-darsena').value = opDarsena; document.getElementById('op-camion').value = opCamion; setIncidenceType(opType); }
+
+        // SCANNER CÁMARA
+        function startScanner() {
+            document.getElementById('modal-scanner').classList.remove('hidden');
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    stopScanner();
+                    handleScannedCode(decodedText);
+                },
+                (errorMessage) => { /* ignore */ }
+            ).catch(err => console.log(err));
+        }
+        function stopScanner() {
+            if(html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); document.getElementById('modal-scanner').classList.add('hidden'); }).catch(err => console.log(err)); }
+            else { document.getElementById('modal-scanner').classList.add('hidden'); }
+        }
+        function handleScannedCode(code) {
+            // Buscar por barra o codigo
+            const match = productsDB.find(p => p.b == code || p.c == code);
+            if(match) { openRegisterModal(match); }
+            else { Swal.fire({ icon: 'error', title: 'No encontrado', text: `Código: ${code} no existe en BD`, confirmButtonColor: 'var(--theme-color)' }); }
         }
 
-        function loginUser(userData) {
-            currentUser = userData;
-            localStorage.setItem('darsena_user', JSON.stringify(userData));
-            document.getElementById('user-name-display').innerText = userData.name.split(' ')[0];
-            document.getElementById('user-avatar').innerText = userData.name.charAt(0);
-            document.getElementById('login-code').value = '';
-            document.getElementById('screen-login').classList.remove('active');
-            setTimeout(() => { document.getElementById('screen-app').classList.remove('hidden'); document.getElementById('screen-app').classList.add('active'); }, 300);
-            renderProductList();
+        function handleSearch(e) {
+            const query = e.target.value.trim();
+            const clearBtn = document.getElementById('clear-search');
+            if(query.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden');
+            const exactMatch = productsDB.find(p => p.c === query || p.b === query);
+            if (exactMatch && e.key === 'Enter') { openRegisterModal(exactMatch); document.getElementById('search-input').blur(); return; }
+            renderProductList(query);
         }
+        function limpiarBuscador() { document.getElementById('search-input').value = ""; document.getElementById('clear-search').classList.add('hidden'); renderProductList(""); document.getElementById('search-input').focus(); }
 
-        function cerrarSesion() { localStorage.removeItem('darsena_user'); currentUser = null; window.location.reload(); }
-        function switchTab(tab) {
-            const views = ['home', 'settings'];
-            views.forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                const btn = document.getElementById(`tab-${v}`);
-                if(v === tab) { el.classList.remove('hidden'); btn.classList.replace('text-gray-400', 'text-theme'); } else { el.classList.add('hidden'); btn.classList.replace('text-theme', 'text-gray-400'); }
-            });
-        }
-        function irAConfiguracion() { switchTab('settings'); setTimeout(() => abrirGestionDB(), 500); }
+        function doLogin() { const c = parseInt(document.getElementById('login-code').value); if(USERS[c]) loginUser({id:c, name:USERS[c]}); else Swal.fire({icon:'error',title:'Error',showConfirmButton:false,timer:1000}); }
+        function loginUser(u) { currentUser=u; localStorage.setItem('darsena_user',JSON.stringify(u)); document.getElementById('user-name-display').innerText=u.name.split(' ')[0]; document.getElementById('user-avatar').innerText=u.name.charAt(0); document.getElementById('screen-login').classList.remove('active'); setTimeout(()=>{document.getElementById('screen-app').classList.remove('hidden');document.getElementById('screen-app').classList.add('active')},300); renderProductList(); }
+        function cerrarSesion() { localStorage.removeItem('darsena_user'); window.location.reload(); }
+        function switchTab(t) { ['home','settings'].forEach(v=>{ const el=document.getElementById(`view-${v}`),b=document.getElementById(`tab-${v}`); if(v===t){el.classList.remove('hidden');b.classList.replace('text-gray-400','text-theme')}else{el.classList.add('hidden');b.classList.replace('text-theme','text-gray-400')} }); }
+        function irAConfiguracion() { switchTab('settings'); setTimeout(()=>abrirGestionDB(),500); }
 
         function loadState() {
-            const savedRegs = localStorage.getItem('darsena_registros');
-            if(savedRegs) registers = JSON.parse(savedRegs);
-            updateBadge();
-            const savedDB = localStorage.getItem('darsena_db');
-            const savedURL = localStorage.getItem('darsena_db_url');
-            if(savedURL) { fetchGoogleSheet(savedURL); }
-            else if(savedDB) { productsDB = JSON.parse(savedDB); renderProductList(); statusReady(); }
-            else { renderProductList(); statusOffline("Modo sin conexión"); }
-            const savedTheme = localStorage.getItem('darsena_theme');
-            if(savedTheme) setTheme(savedTheme);
+            const r=localStorage.getItem('darsena_registros'); if(r) registers=JSON.parse(r); updateBadge();
+            const u=localStorage.getItem('darsena_db_url'), d=localStorage.getItem('darsena_db');
+            if(u) fetchGoogleSheet(u); else if(d) { productsDB=JSON.parse(d); renderProductList(); statusReady(); } else { renderProductList(); statusOffline("Sin conexión"); }
+            const t=localStorage.getItem('darsena_theme'); if(t) setTheme(t);
         }
+        function statusLoading(m) { document.getElementById('dbStatus').classList.remove('hidden'); document.getElementById('dbLoader').style.display='block'; document.getElementById('dbStatusText').innerText=m; document.getElementById('btnLogin').disabled=true; }
+        function statusReady() { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText="BD Lista"; document.getElementById('dbStatus').classList.replace('text-gray-400','text-green-600'); document.getElementById('btnLogin').disabled=false; document.getElementById('btnLogin').classList.remove('opacity-50','cursor-not-allowed'); }
+        function statusOffline(m) { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText=m; document.getElementById('dbStatus').classList.replace('text-gray-400','text-red-500'); document.getElementById('btnLogin').disabled=false; document.getElementById('btnLogin').classList.remove('opacity-50','cursor-not-allowed'); }
 
-        function statusLoading(msg) {
-            document.getElementById('dbStatus').classList.remove('hidden');
-            document.getElementById('dbLoader').style.display = 'block';
-            document.getElementById('dbStatusText').innerText = msg;
-            document.getElementById('btnLogin').disabled = true;
-            document.getElementById('btnLogin').classList.add('opacity-50');
-        }
-        function statusReady() {
-            const el = document.getElementById('dbStatus');
-            document.getElementById('dbLoader').style.display = 'none';
-            document.getElementById('dbStatusText').innerText = "Base de Datos Lista";
-            el.classList.replace('text-gray-400', 'text-green-600');
-            el.classList.replace('bg-gray-50', 'bg-green-50');
-            el.classList.replace('border-gray-200', 'border-green-200');
-            document.getElementById('btnLogin').disabled = false;
-            document.getElementById('btnLogin').classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-        function statusOffline(msg) {
-            const el = document.getElementById('dbStatus');
-            document.getElementById('dbLoader').style.display = 'none';
-            document.getElementById('dbStatusText').innerText = msg;
-            el.classList.replace('text-gray-400', 'text-red-500');
-            document.getElementById('btnLogin').disabled = false;
-            document.getElementById('btnLogin').classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-
-        function guardarConfigDB() {
-            let url = document.getElementById('db-url-input').value.trim();
-            if(url) {
-                localStorage.setItem('darsena_db_url', url);
-                fetchGoogleSheet(url);
-            }
-            cerrarModalDB();
-        }
-
+        function guardarConfigDB() { let u=document.getElementById('db-url-input').value.trim(); if(u){localStorage.setItem('darsena_db_url',u); fetchGoogleSheet(u);} closingModalDB(); }
         function fetchGoogleSheet(url) {
-            statusLoading("Descargando datos...");
-            Papa.parse(url, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    if (results.data && results.data.length > 0) {
-                        // Mapeo exacto a tus columnas: COD_MERCA, COD_BARRA, DESCRIPCION, PROVEEDOR
-                        productsDB = results.data.map(row => {
-                            // Normalizar claves para ser tolerante
-                            const keys = Object.keys(row).reduce((acc, k) => { acc[k.toUpperCase().trim()] = row[k]; return acc; }, {});
-                            
-                            return {
-                                c: keys['COD_MERCA'] || keys['CODIGO'] || '',
-                                b: keys['COD_BARRA'] || keys['BARRA'] || '',
-                                d: keys['DESCRIPCION'] || keys['XDESC'] || '',
-                                p: keys['PROVEEDOR'] || keys['XDESC_DIVI'] || 'VARIOS',
-                                v: 0 
-                            };
+            statusLoading("Actualizando...");
+            Papa.parse(url, { download:true, header:true, skipEmptyLines:true,
+                complete: function(res) {
+                    if(res.data && res.data.length>0) {
+                        productsDB = res.data.map(row => {
+                            const k = Object.keys(row).reduce((acc, key) => { acc[key.toUpperCase().trim()] = row[key]; return acc; }, {});
+                            return { c: k['COD_MERCA']||k['CODIGO']||'', b: k['COD_BARRA']||k['BARRA']||'', d: k['XDESC']||k['DESCRIPCION']||'', p: k['XDESC_DIVI']||k['PROVEEDOR']||'VARIOS', v: 0 };
                         }).filter(p => p.c !== '');
-                        
-                        // Verificar si cargó algo
-                        if (productsDB.length === 0 || !productsDB[0].c) {
-                            console.log("Headers encontrados:", Object.keys(results.data[0]));
-                            Swal.fire('Atención', 'Conexión exitosa pero columnas no coinciden.\nColumnas encontradas: ' + Object.keys(results.data[0]).join(', '), 'warning');
-                        } else {
-                            localStorage.setItem('darsena_db', JSON.stringify(productsDB));
-                            renderProductList();
-                            statusReady();
-                            if(currentUser) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `BD Actualizada: ${productsDB.length} items`, showConfirmButton: false, timer: 3000 });
-                        }
-                    } else {
-                        statusOffline("Hoja vacía");
-                    }
+                        localStorage.setItem('darsena_db', JSON.stringify(productsDB));
+                        renderProductList(); statusReady();
+                        if(currentUser) Swal.fire({toast:true, position:'top-end', icon:'success', title:'BD Actualizada', showConfirmButton:false, timer:2000});
+                    } else statusOffline("Hoja vacía");
                 },
-                error: function(err) {
-                    console.error(err);
-                    statusOffline("Error de red");
-                    if(currentUser) Swal.fire('Error', 'No se pudo conectar. Verifica el enlace.', 'error');
-                }
+                error: function(e) { console.error(e); statusOffline("Error red"); }
             });
         }
 
         function renderProductList(filter = "") {
-            const container = document.getElementById('product-list');
-            const emptyState = document.getElementById('db-empty-state');
-            container.innerHTML = "";
-            if(productsDB) document.getElementById('db-count-label').innerText = `${productsDB.length} productos`;
-
-            if (!productsDB || productsDB.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            let count = 0;
-            const maxShow = 50;
-            const q = filter.toLowerCase();
-            const filtered = productsDB.filter(p => {
-                if(count >= maxShow && q === "") return false;
-                const match = p.d.toLowerCase().includes(q) || p.c.toLowerCase().includes(q) || p.b.includes(q);
-                if(match) count++;
-                return match;
-            });
-
-            if(filtered.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">No se encontró nada</div>`; return; }
-
-            filtered.forEach(p => {
-                const card = document.createElement('div');
-                card.className = "card p-4 flex justify-between items-center active:bg-gray-50 transition-colors cursor-pointer animate-[fadeIn_0.2s_ease-out]";
-                card.onclick = () => openRegisterModal(p);
-                card.innerHTML = `
-                    <div class="flex-1 pr-2">
-                        <div class="flex gap-2 mb-1">
-                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-200">${p.c}</span>
-                            <span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 py-0.5 rounded">${p.p}</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-gray-800 leading-snug">${p.d}</h4>
-                        ${p.b ? `<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>` : ''}
-                    </div>
-                    <div class="ml-2"><div class="w-9 h-9 rounded-full bg-theme text-white shadow-md shadow-theme/20 flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5"></i></div></div>
-                `;
-                container.appendChild(card);
+            const c = document.getElementById('product-list'), e = document.getElementById('db-empty-state');
+            c.innerHTML = ""; if(productsDB) document.getElementById('db-count-label').innerText = `${productsDB.length} productos`;
+            if(!productsDB || productsDB.length===0) { e.classList.remove('hidden'); return; } else e.classList.add('hidden');
+            let cnt=0; const max=50, q=filter.toLowerCase();
+            const res = productsDB.filter(p => { if(cnt>=max && q==="") return false; const m = p.d.toLowerCase().includes(q) || p.c.toLowerCase().includes(q) || p.b.includes(q); if(m) cnt++; return m; });
+            if(res.length===0) { c.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">No se encontró</div>`; return; }
+            res.forEach(p => {
+                const el = document.createElement('div');
+                el.className = "card p-4 flex justify-between items-center active:bg-gray-50 transition-colors cursor-pointer animate-[fadeIn_0.2s_ease-out]";
+                el.onclick = () => openRegisterModal(p);
+                el.innerHTML = `<div class="flex-1 pr-2"><div class="flex gap-2 mb-1"><span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-200">${p.c}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 py-0.5 rounded">${p.p}</span></div><h4 class="font-bold text-sm text-gray-800 leading-snug">${p.d}</h4>${p.b?`<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>`:''}</div><div class="ml-2"><div class="w-9 h-9 rounded-full bg-theme text-white shadow-md shadow-theme/20 flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5"></i></div></div>`;
+                c.appendChild(el);
             });
             lucide.createIcons();
         }
 
-        function filtrar() { renderProductList(document.getElementById('search-input').value); }
-        function openRegisterModal(product) {
-            selectedProd = product;
-            document.getElementById('modal-code').innerText = product.c;
-            document.getElementById('modal-desc').innerText = product.d;
-            document.getElementById('modal-prov').innerText = product.p;
+        function openRegisterModal(p) {
+            selectedProd = p;
+            document.getElementById('modal-code').innerText = p.c; document.getElementById('modal-desc').innerText = p.d; document.getElementById('modal-prov').innerText = p.p;
+            document.getElementById('modal-type-label').innerText = opType;
             document.getElementById('input-qty').value = "";
-            document.getElementById('input-obs').value = "";
-            const modal = document.getElementById('modal-registro');
-            modal.classList.remove('hidden');
+            document.getElementById('modal-registro').classList.remove('hidden');
             setTimeout(() => document.getElementById('input-qty').focus(), 100);
         }
         function cerrarModalRegistro() { document.getElementById('modal-registro').classList.add('hidden'); selectedProd = null; }
-        function updateQty(delta) { const i = document.getElementById('input-qty'); let v = parseInt(i.value) || 0; v = Math.max(0, v + delta); i.value = v === 0 ? "" : v; }
-        function setObs(t) { document.getElementById('input-obs').value = t; }
-        
+        function updateQty(d) { const i=document.getElementById('input-qty'); let v=parseInt(i.value)||0; v=Math.max(0,v+d); i.value=v===0?"":v; }
         function guardar() {
-            const qty = parseInt(document.getElementById('input-qty').value);
-            if(!qty || qty <= 0) { return Swal.fire({toast:true, icon:'warning', title:'Ingresa cantidad', position:'top', showConfirmButton:false, timer:1500}); }
-            const newReg = {
-                id: Date.now(), fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                auditor: currentUser.name, code: selectedProd.c, desc: selectedProd.d, prov: selectedProd.p, qty: qty, obs: document.getElementById('input-obs').value
-            };
-            registers.unshift(newReg);
+            const q = parseInt(document.getElementById('input-qty').value);
+            if(!q || q<=0) { const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; }
+            registers.unshift({ id:Date.now(), fecha:new Date().toLocaleDateString(), hora:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), auditor:currentUser.name, code:selectedProd.c, desc:selectedProd.d, prov:selectedProd.p, qty:q, obs:opType, darsena:opDarsena, camion:opCamion });
             localStorage.setItem('darsena_registros', JSON.stringify(registers));
-            cerrarModalRegistro(); updateBadge();
-            Swal.fire({ icon: 'success', title: 'Registrado', showConfirmButton: false, timer: 1000, confirmButtonColor: 'var(--theme-color)' });
+            cerrarModalRegistro(); updateBadge(); Swal.fire({icon:'success',title:'Guardado',showConfirmButton:false,timer:800});
         }
 
-        function abrirGestionDB() { document.getElementById('modal-db').classList.remove('hidden'); setTimeout(() => { document.getElementById('modal-db-content').classList.remove('scale-95', 'opacity-0'); document.getElementById('modal-db-content').classList.add('scale-100', 'opacity-100'); }, 10); }
-        function cerrarModalDB() { const c = document.getElementById('modal-db-content'); c.classList.remove('scale-100', 'opacity-100'); c.classList.add('scale-95', 'opacity-0'); setTimeout(() => document.getElementById('modal-db').classList.add('hidden'), 200); }
-        function borrarBaseDatos() {
-            Swal.fire({ title: '¿Borrar BD?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sí' }).then((r) => {
-                if (r.isConfirmed) { productsDB = []; localStorage.removeItem('darsena_db'); localStorage.removeItem('darsena_db_url'); document.getElementById('db-url-input').value = ""; renderProductList(); cerrarModalDB(); }
-            })
-        }
-
+        function abrirGestionDB() { document.getElementById('modal-db').classList.remove('hidden'); setTimeout(()=>{document.getElementById('modal-db-content').classList.remove('scale-95','opacity-0');document.getElementById('modal-db-content').classList.add('scale-100','opacity-100')},10); }
+        function closingModalDB() { const c=document.getElementById('modal-db-content'); c.classList.remove('scale-100','opacity-100'); c.classList.add('scale-95','opacity-0'); setTimeout(()=>document.getElementById('modal-db').classList.add('hidden'),200); }
+        function cerrarModalDB() { closingModalDB(); } // Alias
+        function borrarBaseDatos() { Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Sí'}).then((r)=>{if(r.isConfirmed){productsDB=[];localStorage.removeItem('darsena_db');localStorage.removeItem('darsena_db_url');document.getElementById('db-url-input').value="";renderProductList();closingModalDB();}}) }
         function updateBadge() { document.getElementById('badge-count').innerText = registers.length; }
+        function cerrarReportes() { document.getElementById('modal-reportes').classList.add('hidden'); }
+        function setTheme(c) { document.querySelector(':root').style.setProperty('--theme-color',c); document.querySelector(':root').style.setProperty('--theme-light',c+'20'); localStorage.setItem('darsena_theme',c); }
+        
         function verReporte() {
             document.getElementById('modal-reportes').classList.remove('hidden');
-            const list = document.getElementById('lista-registros-container');
-            list.innerHTML = "";
-            if(registers.length === 0) { list.innerHTML = "<p class='text-center text-gray-400 mt-10'>Vacío</p>"; return; }
+            const l = document.getElementById('lista-registros-container'); l.innerHTML = "";
+            if(registers.length===0) { l.innerHTML="<p class='text-center text-gray-400 mt-10'>Vacío</p>"; return; }
             registers.forEach(r => {
-                const item = document.createElement('div');
-                item.className = "card p-4 border-l-4 border-theme relative mb-3 shadow-sm";
-                item.innerHTML = `
-                    <div class="flex justify-between items-start"><div class="pr-8"><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400">${r.hora}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">${r.auditor.split(" ")[0]}</span></div><h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p></div><div class="text-right"><span class="block text-2xl font-black text-theme tracking-tight">+${r.qty}</span><span class="text-[9px] font-bold text-gray-400 uppercase">Unid.</span></div></div>
-                    ${r.obs ? `<div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 flex items-start gap-1"><i data-lucide="message-square" class="w-3 h-3 mt-0.5"></i> ${r.obs}</div>` : ''}
-                    <button onclick="borrarRegistro(${r.id})" class="absolute top-2 right-2 p-2 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                `;
-                list.appendChild(item);
+                const i = document.createElement('div');
+                i.className = "card p-4 border-l-4 border-theme relative mb-3 shadow-sm";
+                i.innerHTML = `<div class="flex justify-between items-start"><div class="pr-8"><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">C:${r.camion||'-'} D:${r.darsena||'-'}</span></div><h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p></div><div class="text-right"><span class="block text-2xl font-black text-theme tracking-tight">+${r.qty}</span></div></div><div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 font-medium">${r.obs}</div><button onclick="borrarRegistro(${r.id})" class="absolute top-2 right-2 p-2 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                l.appendChild(i);
             });
             lucide.createIcons();
         }
-        function cerrarReportes() { document.getElementById('modal-reportes').classList.add('hidden'); }
-        function borrarRegistro(id) {
-            Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then((r) => {
-                if (r.isConfirmed) { registers = registers.filter(r => r.id !== id); localStorage.setItem('darsena_registros', JSON.stringify(registers)); verReporte(); updateBadge(); }
-            })
-        }
+        function borrarRegistro(id) { Swal.fire({title:'¿Eliminar?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'}).then((r)=>{if(r.isConfirmed){registers=registers.filter(r=>r.id!==id);localStorage.setItem('darsena_registros',JSON.stringify(registers));verReporte();updateBadge();}}) }
         function descargarExcel() {
-            if(registers.length === 0) return Swal.fire('Vacío', 'Sin datos.', 'info');
-            let csv = "\uFEFFFECHA;HORA;AUDITOR;CODIGO;DESCRIPCION;PROVEEDOR;CANTIDAD;OBSERVACION\n";
-            registers.forEach(r => { csv += `${r.fecha};${r.hora};${r.auditor};${r.code};${r.desc};${r.prov};${r.qty};${r.obs}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `DARSENA_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`; link.click();
+            if(registers.length===0) return Swal.fire('Vacío','Sin datos','info');
+            let csv="\uFEFFFECHA;HORA;AUDITOR;DARSENA;CAMION;CODIGO;DESCRIPCION;PROVEEDOR;CANTIDAD;OBSERVACION\n";
+            registers.forEach(r=>{csv+=`${r.fecha};${r.hora};${r.auditor};${r.darsena};${r.camion};${r.code};${r.desc};${r.prov};${r.qty};${r.obs}\n`});
+            const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`DARSENA_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; link.click();
         }
-        function setTheme(c) { const r = document.querySelector(':root'); r.style.setProperty('--theme-color', c); r.style.setProperty('--theme-light', c + '20'); localStorage.setItem('darsena_theme', c); }
     </script>
 </body>
 </html>
