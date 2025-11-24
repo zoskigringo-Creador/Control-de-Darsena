@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Control Dársena iOS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Librería PapaParse para Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- SweetAlert2 para alertas bonitas tipo iOS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* --- ESTILO iOS --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F2F2F7; /* Gris sistema iOS */
+            -webkit-tap-highlight-color: transparent;
+            color: #1C1C1E;
+            overscroll-behavior-y: none; /* Evita el rebote de scroll */
+        }
+
+        /* Animaciones y transiciones */
+        .btn-ios {
+            transition: transform 0.1s ease, opacity 0.2s ease, background-color 0.2s;
+        }
+        .btn-ios:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+        
+        /* Cards con efecto cristal o solido */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* Inputs estilo iOS */
+        .input-ios {
+            background: #E5E5EA; /* Gris claro input */
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .input-ios:focus {
+            background: #FFFFFF;
+            box-shadow: 0 0 0 2px var(--theme-color);
+            outline: none;
+        }
+
+        /* Scrollbar oculta */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Transiciones de Pantalla */
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .screen.active {
+            display: flex;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Modal slide up */
+        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .modal-exit { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+        /* Variables CSS para temas dinámicos */
+        :root {
+            --theme-color: #007AFF; /* Azul iOS Default */
+            --theme-light: #E0F0FF;
+        }
+        
+        /* Loader spinner */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <script>
+        // Configuración de Tailwind para usar variables CSS
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theme: 'var(--theme-color)',
+                        'theme-light': 'var(--theme-light)',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-screen w-full overflow-hidden flex flex-col">
+
+    <!-- ================= PANTALLA LOGIN ================= -->
+    <div id="screen-login" class="screen active h-full w-full flex-col items-center justify-center p-6 bg-white z-50 absolute inset-0">
+        <div class="w-full max-w-sm flex flex-col items-center">
+            <div class="w-24 h-24 rounded-3xl bg-theme flex items-center justify-center shadow-xl mb-8 shadow-theme/30">
+                <i data-lucide="box-select" class="text-white w-12 h-12"></i>
+            </div>
+            
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-2">Control Dársena</h1>
+            
+            <!-- Indicador de estado de base de datos -->
+            <div id="dbStatus" class="flex items-center justify-center gap-2 text-gray-400 text-xs font-medium bg-gray-50 py-1 px-3 rounded-full mx-auto w-fit border border-gray-200 mb-8">
+                <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div>
+                <span id="dbStatusText">Conectando con Base de Datos...</span>
+            </div>
+
+            <div class="w-full space-y-4">
+                <div class="bg-gray-50 p-1 rounded-2xl border border-gray-100">
+                    <input type="number" id="login-code" placeholder="Ingresa tu código" 
+                        class="w-full bg-white p-4 rounded-xl text-center text-2xl font-bold outline-none shadow-sm focus:ring-2 focus:ring-theme transition-all" 
+                        inputmode="numeric" autocomplete="off">
+                </div>
+                <button onclick="doLogin()" id="btnLogin" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/20 btn-ios flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
+                    Ingresar <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="mt-12 flex flex-wrap justify-center gap-3 text-xs text-gray-400">
+                <span>1. Fabio</span>
+                <span>2. Javier</span>
+                <span>3. Victor</span>
+                <span>4. Brian</span>
+                <span>5. Rodrigo</span>
+                <span>6. Marcelo</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APP PRINCIPAL ================= -->
+    <div id="screen-app" class="screen h-full w-full flex-col bg-[#F2F2F7] relative hidden">
+        
+        <!-- HEADER TIPO iOS (Grande y colapsable visualmente) -->
+        <div class="bg-white pt-safe-top pb-2 px-4 shadow-sm z-10 sticky top-0">
+            <div class="flex justify-between items-end pb-2">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Hola,</p>
+                    <h2 id="user-name-display" class="text-2xl font-bold text-gray-900 leading-none">Usuario</h2>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-theme font-bold text-lg" id="user-avatar">
+                    U
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENEDOR DE VISTAS (Scrollable) -->
+        <div id="main-content" class="flex-1 overflow-y-auto relative no-scrollbar">
+            
+            <!-- VISTA 1: REGISTRO (SCANNER) -->
+            <div id="view-home" class="view-section p-4 space-y-4 min-h-full pb-24">
+                <!-- Buscador -->
+                <div class="sticky top-0 z-20 py-2 bg-[#F2F2F7]/95 backdrop-blur-sm">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="search-input" onkeyup="filtrar()" placeholder="Buscar producto, código..." 
+                            class="w-full bg-[#E5E5EA] pl-10 pr-4 py-2.5 rounded-xl text-gray-800 placeholder-gray-500 font-medium focus:bg-white transition-all outline-none">
+                    </div>
+                </div>
+
+                <!-- Estado Base de Datos -->
+                <div id="db-empty-state" class="hidden flex flex-col items-center justify-center py-10 text-center">
+                    <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="database" class="w-8 h-8 text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-700">Base de datos vacía</h3>
+                    <p class="text-gray-500 text-sm mb-4 max-w-[200px]">No hay productos cargados para buscar.</p>
+                    <button onclick="irAConfiguracion()" class="text-theme font-bold text-sm">Ir a Configuración para cargar</button>
+                </div>
+
+                <!-- Lista de Productos -->
+                <div id="product-list" class="space-y-3">
+                    <!-- Se llena con JS -->
+                </div>
+            </div>
+
+            <!-- VISTA 2: AJUSTES Y OPCIONES -->
+            <div id="view-settings" class="view-section p-4 space-y-6 min-h-full pb-24 hidden">
+                <h2 class="text-2xl font-bold px-2">Opciones</h2>
+
+                <!-- Sección 1: Personalización -->
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Personalización</p>
+                    <div class="card overflow-hidden">
+                        <div class="p-4 flex justify-between items-center border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-theme flex items-center justify-center text-white"><i data-lucide="palette" class="w-5 h-5"></i></div>
+                                <span class="font-medium">Color del Tema</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="setTheme('#007AFF')" class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
+                                <button onclick="setTheme('#5856D6')" class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
+                                <button onclick="setTheme('#FF9500')" class="w-6 h-6 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 2: Datos y Reportes -->
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Gestión</p>
+                    <div class="card overflow-hidden divide-y divide-gray-100">
+                        
+                        <!-- Ver Reportes -->
+                        <button onclick="verReporte()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+                                <span class="font-medium">Ver Reportes del Día</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-md" id="badge-count">0</span>
+                                <i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                            </div>
+                        </button>
+
+                        <!-- Enviar Reporte -->
+                        <button onclick="descargarExcel()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white"><i data-lucide="share" class="w-5 h-5"></i></div>
+                                <span class="font-medium">Enviar / Descargar Excel</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                        </button>
+
+                        <!-- Base de Datos -->
+                        <button onclick="abrirGestionDB()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-gray-500 flex items-center justify-center text-white"><i data-lucide="database" class="w-5 h-5"></i></div>
+                                <div class="flex flex-col">
+                                    <span class="font-medium">Base de Datos</span>
+                                    <span class="text-xs text-gray-400" id="db-count-label">0 productos</span>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección 3: Cuenta -->
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Sesión</p>
+                    <div class="card overflow-hidden">
+                        <button onclick="cerrarSesion()" class="w-full p-4 flex items-center justify-center gap-2 text-red-500 font-bold btn-ios">
+                            Cerrar Sesión de Usuario
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-center text-gray-400 text-xs pt-4">Control Dársena v3.0</p>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR (iOS Tab Bar) -->
+        <div class="bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe-bottom fixed bottom-0 w-full z-40 flex justify-around items-center h-16 max-w-[600px]">
+            <button onclick="switchTab('home')" id="tab-home" class="flex flex-col items-center justify-center w-full h-full text-theme btn-ios">
+                <i data-lucide="scan-barcode" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Registrar</span>
+            </button>
+            <button onclick="switchTab('settings')" id="tab-settings" class="flex flex-col items-center justify-center w-full h-full text-gray-400 btn-ios">
+                <i data-lucide="settings-2" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-medium">Opciones</span>
+            </button>
+        </div>
+
+        <!-- ================= MODALES ================= -->
+
+        <!-- MODAL: REGISTRO DE CANTIDAD -->
+        <div id="modal-registro" class="fixed inset-0 z-50 hidden">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onclick="cerrarModalRegistro()"></div>
+            <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 shadow-2xl modal-enter max-w-[600px] left-0 right-0 mx-auto">
+                <!-- Handle para arrastrar visualmente -->
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-3/4">
+                        <span class="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded mb-1 inline-block" id="modal-code">CODE</span>
+                        <h3 class="text-xl font-bold text-gray-900 leading-tight" id="modal-desc">Producto</h3>
+                        <p class="text-sm text-gray-500" id="modal-prov">Proveedor</p>
+                    </div>
+                    <button onclick="cerrarModalRegistro()" class="bg-gray-100 p-2 rounded-full text-gray-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                        <button onclick="updateQty(-1)" class="w-14 h-14 bg-white rounded-xl shadow-sm text-2xl font-bold text-gray-600 flex items-center justify-center active:scale-90 transition">-</button>
+                        <input type="number" id="input-qty" class="bg-transparent text-center text-4xl font-bold w-full outline-none text-gray-800" placeholder="0" inputmode="numeric">
+                        <button onclick="updateQty(1)" class="w-14 h-14 bg-theme rounded-xl shadow-sm text-2xl font-bold text-white flex items-center justify-center active:scale-90 transition">+</button>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1 mb-2 block">Motivo / Observación</label>
+                        <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                            <span onclick="setObs('Mal Armado')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Mal Armado</span>
+                            <span onclick="setObs('Espacio')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Espacio</span>
+                            <span onclick="setObs('Picking')" class="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 cursor-pointer border border-gray-200">Picking</span>
+                        </div>
+                        <textarea id="input-obs" class="w-full bg-gray-50 rounded-xl p-3 text-sm border border-gray-200 outline-none focus:ring-2 focus:ring-theme/20 transition-all" rows="2" placeholder="Escribir detalle..."></textarea>
+                    </div>
+
+                    <button onclick="guardar()" class="w-full bg-theme text-white font-bold py-4 rounded-xl text-lg shadow-lg shadow-theme/30 btn-ios">
+                        Confirmar Registro
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: GESTIÓN BASE DE DATOS -->
+        <div id="modal-db" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="cerrarModalDB()"></div>
+            <div class="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl scale-95 opacity-0 transition-all duration-200" id="modal-db-content">
+                <h3 class="text-lg font-bold mb-4 text-gray-900">Gestionar Base de Datos</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Enlace de Google Sheets</label>
+                        <input type="text" id="db-url-input" placeholder="Pega cualquier link de tu hoja aquí..." class="w-full input-ios p-3 text-sm text-gray-800">
+                        <p class="text-[10px] text-gray-400 mt-1 leading-tight">
+                            Acepta links de "Publicar en la web (CSV)" y links normales.
+                        </p>
+                    </div>
+
+                    <div class="relative py-2">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                        <div class="relative flex justify-center"><span class="bg-white px-2 text-xs text-gray-400">O</span></div>
+                    </div>
+
+                    <button onclick="borrarBaseDatos()" class="w-full py-3 text-sm font-bold text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+                        Borrar Base de Datos Local
+                    </button>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="cerrarModalDB()" class="px-4 py-2 text-gray-500 font-bold text-sm">Cancelar</button>
+                    <button onclick="guardarConfigDB()" class="px-6 py-2 bg-theme text-white rounded-lg font-bold text-sm shadow-lg shadow-theme/20 btn-ios">
+                        Conectar y Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: LISTA DE REPORTES -->
+        <div id="modal-reportes" class="fixed inset-0 z-50 hidden bg-[#F2F2F7]">
+            <div class="bg-white pt-safe-top pb-2 px-4 shadow-sm sticky top-0 z-10 flex justify-between items-center h-16">
+                <button onclick="cerrarReportes()" class="flex items-center text-theme font-medium gap-1"><i data-lucide="chevron-left"></i> Volver</button>
+                <h2 class="font-bold text-lg">Reportes</h2>
+                <div class="w-16"></div> <!-- Spacer -->
+            </div>
+            <div id="lista-registros-container" class="p-4 space-y-3 overflow-y-auto h-[calc(100%-64px)] pb-24">
+                <!-- Lista aqui -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LOGICA JAVASCRIPT -->
+    <script>
+        // --- VARIABLES GLOBALES ---
+        const USERS = {
+            1: "Fabio Vera", 2: "Javier Insfran", 3: "Victor Varga", 
+            4: "Brian Quintana", 5: "Rodrigo Cabrera", 6: "Marcelo Diaz"
+        };
+        
+        let currentUser = null;
+        let productsDB = [];
+        let registers = [];
+        let selectedProd = null;
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadState();
+            
+            // Verificar si ya hay sesión
+            const savedUser = localStorage.getItem('darsena_user');
+            if(savedUser) {
+                loginUser(JSON.parse(savedUser));
+            }
+        });
+
+        // --- SISTEMA DE LOGIN ---
+        function doLogin() {
+            const code = parseInt(document.getElementById('login-code').value);
+            if (USERS[code]) {
+                const userData = { id: code, name: USERS[code] };
+                loginUser(userData);
+            } else {
+                Swal.fire({
+                    icon: 'error', title: 'Error', text: 'Código incorrecto', 
+                    confirmButtonColor: 'var(--theme-color)',
+                    timer: 1500, showConfirmButton: false
+                });
+            }
+        }
+
+        function loginUser(userData) {
+            currentUser = userData;
+            localStorage.setItem('darsena_user', JSON.stringify(userData));
+            
+            // UI Updates
+            document.getElementById('user-name-display').innerText = userData.name.split(' ')[0];
+            document.getElementById('user-avatar').innerText = userData.name.charAt(0);
+            document.getElementById('login-code').value = '';
+
+            // Transición
+            document.getElementById('screen-login').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('screen-app').classList.remove('hidden');
+                document.getElementById('screen-app').classList.add('active');
+            }, 300);
+            
+            // Cargar datos si existen
+            renderProductList();
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('darsena_user');
+            currentUser = null;
+            window.location.reload();
+        }
+
+        // --- NAVEGACIÓN ---
+        function switchTab(tab) {
+            const views = ['home', 'settings'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const btn = document.getElementById(`tab-${v}`);
+                if(v === tab) {
+                    el.classList.remove('hidden');
+                    btn.classList.replace('text-gray-400', 'text-theme');
+                } else {
+                    el.classList.add('hidden');
+                    btn.classList.replace('text-theme', 'text-gray-400');
+                }
+            });
+        }
+
+        function irAConfiguracion() {
+            switchTab('settings');
+            // Abrir modal automáticamente para ayudar al usuario
+            setTimeout(() => abrirGestionDB(), 500);
+        }
+
+        // --- BASE DE DATOS Y PRODUCTOS ---
+        function loadState() {
+            // Cargar registros
+            const savedRegs = localStorage.getItem('darsena_registros');
+            if(savedRegs) registers = JSON.parse(savedRegs);
+            updateBadge();
+
+            // Cargar BD Productos
+            const savedDB = localStorage.getItem('darsena_db');
+            const savedURL = localStorage.getItem('darsena_db_url');
+            
+            if(savedURL) {
+                // Si hay URL guardada, intentar actualizar en segundo plano
+                console.log("URL encontrada, actualizando...");
+                fetchGoogleSheet(savedURL);
+            } else if(savedDB) {
+                productsDB = JSON.parse(savedDB);
+                renderProductList();
+                statusReady();
+            } else {
+                renderProductList(); // Renderizará estado vacío
+                statusOffline("Modo sin conexión");
+            }
+
+            // Cargar Tema
+            const savedTheme = localStorage.getItem('darsena_theme');
+            if(savedTheme) setTheme(savedTheme);
+        }
+
+        function statusLoading(msg) {
+            const el = document.getElementById('dbStatus');
+            const txt = document.getElementById('dbStatusText');
+            const load = document.getElementById('dbLoader');
+            const btn = document.getElementById('btnLogin');
+            
+            el.classList.remove('hidden');
+            load.style.display = 'block';
+            txt.innerText = msg;
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+        }
+
+        function statusReady() {
+            const el = document.getElementById('dbStatus');
+            const txt = document.getElementById('dbStatusText');
+            const load = document.getElementById('dbLoader');
+            const btn = document.getElementById('btnLogin');
+
+            load.style.display = 'none';
+            txt.innerText = "Conectado y listo";
+            el.classList.replace('text-gray-400', 'text-green-600');
+            el.classList.replace('bg-gray-50', 'bg-green-50');
+            el.classList.replace('border-gray-200', 'border-green-200');
+            
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function statusOffline(msg) {
+            const el = document.getElementById('dbStatus');
+            const txt = document.getElementById('dbStatusText');
+            const load = document.getElementById('dbLoader');
+            const btn = document.getElementById('btnLogin');
+
+            load.style.display = 'none';
+            txt.innerText = msg || "Error de conexión";
+            el.classList.replace('text-gray-400', 'text-red-500');
+            
+            // Permitir entrar aunque falle, por si hay datos cacheados
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // --- MAGIA DEL PARSER DE GOOGLE SHEETS ---
+        function extractSheetID(url) {
+            // Esta función ahora es solo para links "normales" (/d/ID/edit)
+            // NO se usará para links publicados (/d/e/...)
+            const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : null;
+        }
+
+        function guardarConfigDB() {
+            let rawUrl = document.getElementById('db-url-input').value.trim();
+            if (!rawUrl) return;
+
+            let finalUrl = rawUrl;
+
+            // LÓGICA INTELIGENTE CORREGIDA:
+            // 1. Si el link es de "Publicar en la web" (contiene /d/e/), lo usamos TAL CUAL.
+            //    Ya está en el formato correcto para descargar.
+            if (rawUrl.includes('/d/e/')) {
+                finalUrl = rawUrl;
+            } 
+            // 2. Si es un link de navegador normal (contiene /edit o solo el ID), intentamos convertirlo.
+            else {
+                const sheetId = extractSheetID(rawUrl);
+                if (sheetId) {
+                    // Convertimos link de navegador a API gviz
+                    finalUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+                } else {
+                    // Si no reconocemos el formato pero no es /d/e/, probamos suerte tal cual
+                    console.warn("Formato no reconocido, probando URL directa");
+                }
+            }
+
+            localStorage.setItem('darsena_db_url', finalUrl);
+            fetchGoogleSheet(finalUrl);
+            cerrarModalDB();
+        }
+
+        function fetchGoogleSheet(url) {
+            statusLoading("Descargando datos...");
+            console.log("Intentando cargar URL:", url);
+            
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        // Mapeo inteligente de columnas
+                        productsDB = results.data.map(row => {
+                            // Normalizar claves a minusculas para buscar sin importar mayus/minus
+                            const keys = Object.keys(row).reduce((acc, k) => {
+                                acc[k.toLowerCase().trim()] = row[k];
+                                return acc;
+                            }, {});
+
+                            return {
+                                c: keys['codigo'] || keys['cod'] || keys['id'] || '',
+                                b: keys['barra'] || keys['ean'] || keys['cod_barra'] || '',
+                                d: keys['descripcion'] || keys['desc'] || keys['producto'] || '',
+                                p: keys['proveedor'] || keys['prov'] || 'VARIOS',
+                                v: 0 
+                            };
+                        }).filter(p => p.c !== ''); // Filtrar vacíos
+                        
+                        localStorage.setItem('darsena_db', JSON.stringify(productsDB));
+                        renderProductList();
+                        statusReady();
+                        
+                        if(currentUser) {
+                            const Toast = Swal.mixin({
+                                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
+                            });
+                            Toast.fire({ icon: 'success', title: `BD Actualizada: ${productsDB.length} items` });
+                        }
+                    } else {
+                        statusOffline("Hoja vacía o error de formato");
+                    }
+                },
+                error: function(err) {
+                    console.error(err);
+                    statusOffline("Error de red. Revisa tu internet.");
+                    if(currentUser) Swal.fire('Error de Conexión', 'No se pudo descargar la lista. Verifica tu internet o el enlace.', 'error');
+                }
+            });
+        }
+
+        function renderProductList(filter = "") {
+            const container = document.getElementById('product-list');
+            const emptyState = document.getElementById('db-empty-state');
+            const countLabel = document.getElementById('db-count-label');
+            
+            container.innerHTML = "";
+            if(productsDB) countLabel.innerText = `${productsDB.length} productos`;
+
+            if (!productsDB || productsDB.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            let count = 0;
+            const maxShow = 50; // Límite para rendimiento
+            const q = filter.toLowerCase();
+
+            // Filtrar
+            const filtered = productsDB.filter(p => {
+                if(count >= maxShow && q === "") return false; // Optimización
+                const match = p.d.toLowerCase().includes(q) || p.c.toLowerCase().includes(q) || p.b.includes(q);
+                if(match) count++;
+                return match;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">No se encontró nada</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "card p-4 flex justify-between items-center active:bg-gray-50 transition-colors cursor-pointer animate-[fadeIn_0.2s_ease-out]";
+                card.onclick = () => openRegisterModal(p);
+                card.innerHTML = `
+                    <div class="flex-1 pr-2">
+                        <div class="flex gap-2 mb-1">
+                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-gray-200">${p.c}</span>
+                            <span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 py-0.5 rounded">${p.p}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-800 leading-snug">${p.d}</h4>
+                        ${p.b ? `<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>` : ''}
+                    </div>
+                    <div class="ml-2">
+                        <div class="w-9 h-9 rounded-full bg-theme text-white shadow-md shadow-theme/20 flex items-center justify-center">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function filtrar() {
+            renderProductList(document.getElementById('search-input').value);
+        }
+
+        // --- MODAL REGISTRO ---
+        function openRegisterModal(product) {
+            selectedProd = product;
+            document.getElementById('modal-code').innerText = product.c;
+            document.getElementById('modal-desc').innerText = product.d;
+            document.getElementById('modal-prov').innerText = product.p;
+            document.getElementById('input-qty').value = "";
+            document.getElementById('input-obs').value = "";
+            
+            const modal = document.getElementById('modal-registro');
+            modal.classList.remove('hidden');
+            // Animación de entrada
+            const content = modal.querySelector('div.absolute.bottom-0');
+            content.classList.remove('modal-exit');
+            content.classList.add('modal-enter');
+            
+            setTimeout(() => document.getElementById('input-qty').focus(), 100);
+        }
+
+        function cerrarModalRegistro() {
+            const modal = document.getElementById('modal-registro');
+            const content = modal.querySelector('div.absolute.bottom-0');
+            content.classList.remove('modal-enter');
+            content.classList.add('modal-exit');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                selectedProd = null;
+            }, 250);
+        }
+
+        function updateQty(delta) {
+            const input = document.getElementById('input-qty');
+            let val = parseInt(input.value) || 0;
+            val = Math.max(0, val + delta);
+            input.value = val === 0 ? "" : val;
+        }
+
+        function setObs(text) {
+            document.getElementById('input-obs').value = text;
+        }
+
+        function guardar() {
+            const qty = parseInt(document.getElementById('input-qty').value);
+            if(!qty || qty <= 0) {
+                const inp = document.getElementById('input-qty');
+                inp.parentElement.classList.add('ring-2', 'ring-red-500', 'animate-pulse');
+                setTimeout(() => inp.parentElement.classList.remove('ring-2', 'ring-red-500', 'animate-pulse'), 500);
+                return;
+            }
+
+            const newReg = {
+                id: Date.now(),
+                fecha: new Date().toLocaleDateString(),
+                hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                auditor: currentUser.name,
+                code: selectedProd.c,
+                desc: selectedProd.d,
+                prov: selectedProd.p,
+                qty: qty,
+                obs: document.getElementById('input-obs').value
+            };
+
+            // Guardar instantaneo
+            registers.unshift(newReg);
+            localStorage.setItem('darsena_registros', JSON.stringify(registers));
+            
+            cerrarModalRegistro();
+            updateBadge();
+            
+            // Feedback Táctil Visual (Toast)
+            const Toast = Swal.mixin({
+                toast: true, position: 'top', showConfirmButton: false, timer: 1500
+            });
+            Toast.fire({ icon: 'success', title: 'Registrado' });
+        }
+
+        // --- GESTIÓN BASE DE DATOS ---
+        function abrirGestionDB() {
+            const modal = document.getElementById('modal-db');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('modal-db-content').classList.remove('scale-95', 'opacity-0');
+                document.getElementById('modal-db-content').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function cerrarModalDB() {
+            const content = document.getElementById('modal-db-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => document.getElementById('modal-db').classList.add('hidden'), 200);
+        }
+
+        function borrarBaseDatos() {
+            Swal.fire({
+                title: '¿Borrar datos locales?',
+                text: "Tendrás que volver a conectar la hoja para buscar productos.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, borrar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    productsDB = [];
+                    localStorage.removeItem('darsena_db');
+                    localStorage.removeItem('darsena_db_url');
+                    document.getElementById('db-url-input').value = "";
+                    renderProductList();
+                    cerrarModalDB();
+                    statusOffline("Base de datos borrada");
+                }
+            })
+        }
+
+        // --- REPORTES ---
+        function updateBadge() {
+            const count = registers.length;
+            document.getElementById('badge-count').innerText = count;
+        }
+
+        function verReporte() {
+            const modal = document.getElementById('modal-reportes');
+            modal.classList.remove('hidden');
+            const list = document.getElementById('lista-registros-container');
+            list.innerHTML = "";
+
+            if(registers.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <i data-lucide="clipboard-x" class="w-12 h-12 mb-2 opacity-50"></i>
+                        <p>No hay registros hoy.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            registers.forEach(r => {
+                const item = document.createElement('div');
+                item.className = "card p-4 border-l-4 border-theme relative mb-3 shadow-sm";
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="pr-8">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                                    <i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}
+                                </span>
+                                <span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">${r.auditor.split(" ")[0]}</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4>
+                            <p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-2xl font-black text-theme tracking-tight">+${r.qty}</span>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase">Unid.</span>
+                        </div>
+                    </div>
+                    ${r.obs ? `<div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 flex items-start gap-1"><i data-lucide="message-square" class="w-3 h-3 mt-0.5"></i> ${r.obs}</div>` : ''}
+                    <button onclick="borrarRegistro(${r.id})" class="absolute top-2 right-2 p-2 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function cerrarReportes() {
+            document.getElementById('modal-reportes').classList.add('hidden');
+        }
+
+        function borrarRegistro(id) {
+            Swal.fire({
+                title: '¿Eliminar?',
+                text: "No podrás recuperar este registro.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    registers = registers.filter(r => r.id !== id);
+                    localStorage.setItem('darsena_registros', JSON.stringify(registers));
+                    verReporte(); // Re-render
+                    updateBadge();
+                }
+            })
+        }
+
+        function descargarExcel() {
+            if(registers.length === 0) return Swal.fire('Vacío', 'No hay datos para exportar hoy.', 'info');
+            
+            let csv = "\uFEFFFECHA;HORA;AUDITOR;CODIGO;DESCRIPCION;PROVEEDOR;CANTIDAD;OBSERVACION\n";
+            registers.forEach(r => {
+                csv += `${r.fecha};${r.hora};${r.auditor};${r.code};${r.desc};${r.prov};${r.qty};${r.obs}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `DARSENA_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+            link.click();
+        }
+
+        // --- TEMAS ---
+        function setTheme(color) {
+            const r = document.querySelector(':root');
+            r.style.setProperty('--theme-color', color);
+            r.style.setProperty('--theme-light', color + '20'); // 20 hex = ~12% alpha
+            localStorage.setItem('darsena_theme', color);
+        }
+
+    </script>
+</body>
+</html>
