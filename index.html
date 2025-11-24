@@ -27,13 +27,10 @@
             -webkit-tap-highlight-color: transparent;
             color: #1C1C1E;
             overscroll-behavior-y: none;
-            touch-action: pan-x pan-y; /* Bloquea zoom de doble tap */
+            touch-action: pan-x pan-y;
         }
         
-        /* Bloqueo estricto de zoom en elementos interactivos */
-        button, input, select, textarea, a {
-            touch-action: manipulation;
-        }
+        button, input, select, textarea, a { touch-action: manipulation; }
 
         .btn-ios { transition: transform 0.1s ease, opacity 0.2s ease; }
         .btn-ios:active { transform: scale(0.97); opacity: 0.9; }
@@ -43,7 +40,6 @@
         .input-ios { background: #E5E5EA; border: none; border-radius: 10px; transition: all 0.3s; }
         .input-ios:focus { background: #FFFFFF; box-shadow: 0 0 0 2px var(--theme-color); outline: none; }
         
-        /* Selector Tipo */
         .segment-control { background: #E5E5EA; padding: 4px; border-radius: 12px; display: flex; }
         .segment-btn { flex: 1; padding: 8px; text-align: center; font-size: 11px; font-weight: 600; border-radius: 8px; color: #8E8E93; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .segment-btn.active { background: white; color: var(--theme-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -64,7 +60,6 @@
         .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Estilos Escáner */
         #reader video { object-fit: cover; border-radius: 16px; }
     </style>
     <script>
@@ -81,7 +76,6 @@
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-2">Control Dársena</h1>
             
-            <!-- Estado BD -->
             <div id="dbStatus" class="flex items-center justify-center gap-2 text-gray-400 text-xs font-medium bg-gray-50 py-1 px-3 rounded-full mx-auto w-fit border border-gray-200 mb-8">
                 <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div><span id="dbStatusText">Iniciando sistema...</span>
             </div>
@@ -139,8 +133,7 @@
                 <div id="db-empty-state" class="hidden flex flex-col items-center justify-center py-10 text-center px-4">
                     <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4"><i data-lucide="database" class="w-8 h-8 text-gray-400"></i></div>
                     <h3 class="text-lg font-bold text-gray-700">Base de datos vacía</h3>
-                    <p class="text-gray-500 text-sm mb-4">Conecta tu Excel para empezar.</p>
-                    <button onclick="irAConfiguracion()" class="text-theme font-bold text-sm">Ir a Configuración</button>
+                    <p class="text-gray-500 text-sm mb-4">Cargando datos automáticos...</p>
                 </div>
 
                 <div id="product-list" class="space-y-3 px-4"></div>
@@ -149,15 +142,16 @@
             <!-- VISTA SETTINGS -->
             <div id="view-settings" class="view-section p-4 space-y-6 min-h-full pb-24 hidden">
                 <h2 class="text-2xl font-bold px-2">Opciones</h2>
+                
                 <div class="space-y-2">
                     <p class="text-xs font-bold text-gray-400 uppercase ml-2">Reportes en Nube</p>
                     <div class="card overflow-hidden divide-y divide-gray-100">
-                        <button onclick="abrirGestionCloud()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white"><i data-lucide="cloud-upload" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Conectar Script de Carga</span><span class="text-xs text-gray-400" id="cloud-status-label">No conectado</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
-                        </button>
                         <button onclick="enviarTodoNube()" class="w-full p-4 flex justify-between items-center btn-ios text-left bg-blue-50">
                             <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white"><i data-lucide="send" class="w-5 h-5"></i></div>
                             <div class="flex flex-col"><span class="font-medium text-blue-800">Enviar Pendientes Ahora</span><span class="text-xs text-blue-600">Se borrarán al enviar</span></div></div><i data-lucide="chevron-right" class="text-blue-300 w-5 h-5"></i>
+                        </button>
+                        <button onclick="abrirGestionCloud()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white"><i data-lucide="cloud-upload" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Configurar Script</span><span class="text-xs text-gray-400" id="cloud-status-label">Conectado Auto</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -183,7 +177,7 @@
                     <div class="card overflow-hidden"><div class="p-4 flex justify-between items-center"><span class="font-medium ml-2">Color del Tema</span><div class="flex gap-2"><button onclick="setTheme('#007AFF')" class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#5856D6')" class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#FF9500')" class="w-6 h-6 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button></div></div></div>
                 </div>
                 <div class="space-y-2 pt-4"><button onclick="cerrarSesion()" class="w-full p-4 bg-white rounded-xl text-red-500 font-bold btn-ios shadow-sm">Cerrar Sesión</button></div>
-                <p class="text-center text-gray-400 text-xs pt-4 pb-10">Control Dársena v6.0</p>
+                <p class="text-center text-gray-400 text-xs pt-4 pb-10">Control Dársena v7.0</p>
             </div>
         </div>
 
@@ -268,9 +262,9 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN AUTOMÁTICA PARA TU EQUIPO ---
-        // Puse tu link aquí dentro. ¡No tienen que hacer nada!
+        // --- CONFIGURACIÓN AUTOMÁTICA 100% ---
         const DEFAULT_EXCEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7gUS0hLg-DTKmCeLTT9rniA7SLjJAf7kT6Jf76ICN89Skpq5By1V4GQ15YtBugUWE5M1xYJyvZd82/pub?output=csv";
+        const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbzjEzlqn-eyVGFo56MEsc6fsxcsIufSo4VGj4mOBAmXEcJZb_xabvC67v2pGXTKCduc0w/exec";
 
         const USERS = { 1: "Fabio Vera", 2: "Javier Insfran", 3: "Victor Varga", 4: "Brian Quintana", 5: "Rodrigo Cabrera", 6: "Marcelo Diaz" };
         let currentUser = null, productsDB = [], registers = [], selectedProd = null;
@@ -333,31 +327,27 @@
         function switchTab(t) { ['home','settings'].forEach(v=>{ const el=document.getElementById(`view-${v}`),b=document.getElementById(`tab-${v}`); if(v===t){el.classList.remove('hidden');b.classList.replace('text-gray-400','text-theme')}else{el.classList.add('hidden');b.classList.replace('text-theme','text-gray-400')} }); }
         function irAConfiguracion() { switchTab('settings'); setTimeout(()=>abrirGestionDB(),500); }
 
-        // --- CARGA DE DATOS (Lógica Mejorada) ---
+        // --- CARGA DE DATOS (Lógica Mejorada Automática) ---
         function loadState() {
             const r=localStorage.getItem('darsena_registros'); if(r) registers=JSON.parse(r); updateBadge();
             
-            // 1. Ver si hay URL guardada manual
+            // 1. Base de Datos de Productos (Excel)
             let u = localStorage.getItem('darsena_db_url');
-            // 2. Si no, usar la DEFAULT (Automática para equipo)
             if(!u && DEFAULT_EXCEL_URL) {
                 u = DEFAULT_EXCEL_URL;
-                localStorage.setItem('darsena_db_url', u); // Guardarla para futuro
+                localStorage.setItem('darsena_db_url', u); 
             }
-
             const d=localStorage.getItem('darsena_db');
+            if(u) { fetchGoogleSheet(u); } 
+            else if(d) { productsDB=JSON.parse(d); renderProductList(); statusReady(); } 
+            else { renderProductList(); statusOffline("Sin conexión"); }
             
-            if(u) { 
-                // Intentar cargar siempre al inicio para tener datos frescos
-                fetchGoogleSheet(u); 
-            } else if(d) { 
-                productsDB=JSON.parse(d); renderProductList(); statusReady(); 
-            } else { 
-                renderProductList(); statusOffline("Sin conexión"); 
+            // 2. Script de Reportes (Cloud)
+            let cloudUrl = localStorage.getItem('darsena_cloud_url');
+            if (!cloudUrl && DEFAULT_CLOUD_URL) {
+                cloudUrl = DEFAULT_CLOUD_URL;
+                localStorage.setItem('darsena_cloud_url', cloudUrl);
             }
-            
-            // Cargar Estado Cloud
-            const cloudUrl = localStorage.getItem('darsena_cloud_url');
             if(cloudUrl) document.getElementById('cloud-status-label').innerText = "Conectado";
 
             const t=localStorage.getItem('darsena_theme'); if(t) setTheme(t);
@@ -379,7 +369,6 @@
                         }).filter(p => p.c !== '');
                         localStorage.setItem('darsena_db', JSON.stringify(productsDB));
                         renderProductList(); statusReady();
-                        // Solo notificar si ya estamos logueados para no molestar en el login
                         if(currentUser) Swal.fire({toast:true, position:'top-end', icon:'success', title:'BD Actualizada', showConfirmButton:false, timer:2000});
                     } else statusOffline("Hoja vacía");
                 },
@@ -414,17 +403,15 @@
         }
         function cerrarModalRegistro() { document.getElementById('modal-registro').classList.add('hidden'); selectedProd = null; }
         
-        // ACTUALIZADO: Permitir negativos y 0
         function updateQty(d) { 
             const i=document.getElementById('input-qty'); 
             let v=parseInt(i.value)||0; 
-            v = v + d; // Suma directa
+            v = v + d; 
             i.value = v; 
         }
         
         function guardar() {
             const q = parseInt(document.getElementById('input-qty').value);
-            // Validacion: solo alertar si es vacio o NaN, permitir negativos y 0 si es necesario
             if(isNaN(q)) { 
                 const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; 
             }
@@ -439,7 +426,6 @@
         function cerrarModalDB() { closingModalDB(); }
         function borrarBaseDatos() { Swal.fire({title:'¿Borrar?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Sí'}).then((r)=>{if(r.isConfirmed){productsDB=[];localStorage.removeItem('darsena_db');localStorage.removeItem('darsena_db_url');document.getElementById('db-url-input').value="";renderProductList();closingModalDB();}}) }
         
-        // CLOUD SYNC
         function abrirGestionCloud() { document.getElementById('modal-cloud').classList.remove('hidden'); setTimeout(()=>{document.getElementById('modal-cloud-content').classList.remove('scale-95','opacity-0');document.getElementById('modal-cloud-content').classList.add('scale-100','opacity-100')},10); }
         function cerrarModalCloud() { const c=document.getElementById('modal-cloud-content'); c.classList.remove('scale-100','opacity-100'); c.classList.add('scale-95','opacity-0'); setTimeout(()=>document.getElementById('modal-cloud').classList.add('hidden'),200); }
         function guardarConfigCloud() {
@@ -464,10 +450,7 @@
                     body: payload
                 });
 
-                // Si llegamos aquí, asumimos éxito (no-cors no devuelve status legible)
                 Swal.fire({ icon: 'success', title: '¡Enviado!', text: 'Datos guardados en la nube y borrados del celular.' });
-                
-                // LIMPIAR DATOS LOCALES
                 registers = []; 
                 localStorage.setItem('darsena_registros', JSON.stringify([])); 
                 updateBadge();
@@ -487,7 +470,6 @@
             const l = document.getElementById('lista-registros-container'); l.innerHTML = "";
             if(registers.length===0) { l.innerHTML="<p class='text-center text-gray-400 mt-10'>Vacío</p>"; return; }
             registers.forEach(r => {
-                // Diseño corregido: Padding right extra para el botón borrar
                 const i = document.createElement('div');
                 i.className = "card p-4 border-l-4 border-theme relative mb-3 shadow-sm";
                 i.innerHTML = `<div class="flex justify-between items-start"><div class="pr-12"><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">C:${r.camion||'-'} D:${r.darsena||'-'}</span></div><h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p></div><div class="text-right"><span class="block text-2xl font-black text-theme tracking-tight">${r.qty>0?'+':''}${r.qty}</span></div></div><div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 font-medium">${r.obs}</div><button onclick="borrarRegistro(${r.id})" class="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>`;
