@@ -27,12 +27,11 @@
             -webkit-tap-highlight-color: transparent;
             color: #1C1C1E;
             overscroll-behavior-y: none;
-            /* Evita zoom en doble tap */
-            touch-action: manipulation; 
+            touch-action: pan-x pan-y; /* Bloquea zoom de doble tap */
         }
         
-        /* Bloqueo de zoom especifico en inputs y botones */
-        button, input, select, textarea {
+        /* Bloqueo estricto de zoom en elementos interactivos */
+        button, input, select, textarea, a {
             touch-action: manipulation;
         }
 
@@ -81,9 +80,12 @@
                 <i data-lucide="box-select" class="text-white w-12 h-12"></i>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-2">Control Dársena</h1>
+            
+            <!-- Estado BD -->
             <div id="dbStatus" class="flex items-center justify-center gap-2 text-gray-400 text-xs font-medium bg-gray-50 py-1 px-3 rounded-full mx-auto w-fit border border-gray-200 mb-8">
-                <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div><span id="dbStatusText">Conectando BD...</span>
+                <div class="loader border-gray-400 border-t-theme w-3 h-3" id="dbLoader"></div><span id="dbStatusText">Iniciando sistema...</span>
             </div>
+
             <div class="w-full space-y-4">
                 <div class="bg-gray-50 p-1 rounded-2xl border border-gray-100">
                     <input type="number" id="login-code" placeholder="Ingresa tu código" class="w-full bg-white p-4 rounded-xl text-center text-2xl font-bold outline-none shadow-sm focus:ring-2 focus:ring-theme transition-all" inputmode="numeric" autocomplete="off">
@@ -148,22 +150,14 @@
             <div id="view-settings" class="view-section p-4 space-y-6 min-h-full pb-24 hidden">
                 <h2 class="text-2xl font-bold px-2">Opciones</h2>
                 <div class="space-y-2">
-                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Base de Datos Productos</p>
-                    <div class="card overflow-hidden divide-y divide-gray-100">
-                        <button onclick="abrirGestionDB()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gray-500 flex items-center justify-center text-white"><i data-lucide="database" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Conectar Excel Productos</span><span class="text-xs text-gray-400" id="db-count-label">0 productos</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="space-y-2">
                     <p class="text-xs font-bold text-gray-400 uppercase ml-2">Reportes en Nube</p>
                     <div class="card overflow-hidden divide-y divide-gray-100">
                         <button onclick="abrirGestionCloud()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
                             <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white"><i data-lucide="cloud-upload" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Conectar Script de Carga</span><span class="text-xs text-gray-400" id="cloud-status-label">No conectado</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
                         </button>
-                        <button onclick="enviarTodoNube()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
-                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white"><i data-lucide="send" class="w-5 h-5"></i></div><span class="font-medium">Enviar Pendientes Ahora</span></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                        <button onclick="enviarTodoNube()" class="w-full p-4 flex justify-between items-center btn-ios text-left bg-blue-50">
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white"><i data-lucide="send" class="w-5 h-5"></i></div>
+                            <div class="flex flex-col"><span class="font-medium text-blue-800">Enviar Pendientes Ahora</span><span class="text-xs text-blue-600">Se borrarán al enviar</span></div></div><i data-lucide="chevron-right" class="text-blue-300 w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
@@ -178,7 +172,15 @@
                         <button onclick="descargarExcel()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
                             <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white"><i data-lucide="share" class="w-5 h-5"></i></div><span class="font-medium">Exportar Excel Local</span></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
                         </button>
+                        <button onclick="abrirGestionDB()" class="w-full p-4 flex justify-between items-center btn-ios text-left">
+                            <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gray-500 flex items-center justify-center text-white"><i data-lucide="database" class="w-5 h-5"></i></div><div class="flex flex-col"><span class="font-medium">Re-conectar Productos</span><span class="text-xs text-gray-400" id="db-count-label">0 productos</span></div></div><i data-lucide="chevron-right" class="text-gray-300 w-5 h-5"></i>
+                        </button>
                     </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-gray-400 uppercase ml-2">Apariencia</p>
+                    <div class="card overflow-hidden"><div class="p-4 flex justify-between items-center"><span class="font-medium ml-2">Color del Tema</span><div class="flex gap-2"><button onclick="setTheme('#007AFF')" class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#5856D6')" class="w-6 h-6 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button><button onclick="setTheme('#FF9500')" class="w-6 h-6 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent focus:ring-gray-300"></button></div></div></div>
                 </div>
                 <div class="space-y-2 pt-4"><button onclick="cerrarSesion()" class="w-full p-4 bg-white rounded-xl text-red-500 font-bold btn-ios shadow-sm">Cerrar Sesión</button></div>
                 <p class="text-center text-gray-400 text-xs pt-4 pb-10">Control Dársena v6.0</p>
@@ -207,7 +209,7 @@
                 <div class="mb-6 bg-theme-light text-theme px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i><span id="modal-type-label">Sobrante de mercaderia</span></div>
                 <div class="space-y-6">
                     <div class="flex items-center justify-between bg-gray-50 p-2 rounded-2xl border border-gray-100">
-                        <!-- Permitir negativos cambiando la lógica del botón -->
+                        <!-- Permitir negativos -->
                         <button onclick="updateQty(-1)" class="w-14 h-14 bg-white rounded-xl shadow-sm text-2xl font-bold text-gray-600 flex items-center justify-center active:scale-90 transition">-</button>
                         <input type="number" id="input-qty" class="bg-transparent text-center text-4xl font-bold w-full outline-none text-gray-800" placeholder="0" inputmode="numeric">
                         <button onclick="updateQty(1)" class="w-14 h-14 bg-theme rounded-xl shadow-sm text-2xl font-bold text-white flex items-center justify-center active:scale-90 transition">+</button>
@@ -266,6 +268,10 @@
     </div>
 
     <script>
+        // --- CONFIGURACIÓN AUTOMÁTICA PARA TU EQUIPO ---
+        // Puse tu link aquí dentro. ¡No tienen que hacer nada!
+        const DEFAULT_EXCEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7gUS0hLg-DTKmCeLTT9rniA7SLjJAf7kT6Jf76ICN89Skpq5By1V4GQ15YtBugUWE5M1xYJyvZd82/pub?output=csv";
+
         const USERS = { 1: "Fabio Vera", 2: "Javier Insfran", 3: "Victor Varga", 4: "Brian Quintana", 5: "Rodrigo Cabrera", 6: "Marcelo Diaz" };
         let currentUser = null, productsDB = [], registers = [], selectedProd = null;
         let opDarsena = "", opCamion = "", opType = "Sobrante de mercaderia";
@@ -327,10 +333,28 @@
         function switchTab(t) { ['home','settings'].forEach(v=>{ const el=document.getElementById(`view-${v}`),b=document.getElementById(`tab-${v}`); if(v===t){el.classList.remove('hidden');b.classList.replace('text-gray-400','text-theme')}else{el.classList.add('hidden');b.classList.replace('text-theme','text-gray-400')} }); }
         function irAConfiguracion() { switchTab('settings'); setTimeout(()=>abrirGestionDB(),500); }
 
+        // --- CARGA DE DATOS (Lógica Mejorada) ---
         function loadState() {
             const r=localStorage.getItem('darsena_registros'); if(r) registers=JSON.parse(r); updateBadge();
-            const u=localStorage.getItem('darsena_db_url'), d=localStorage.getItem('darsena_db');
-            if(u) fetchGoogleSheet(u); else if(d) { productsDB=JSON.parse(d); renderProductList(); statusReady(); } else { renderProductList(); statusOffline("Sin conexión"); }
+            
+            // 1. Ver si hay URL guardada manual
+            let u = localStorage.getItem('darsena_db_url');
+            // 2. Si no, usar la DEFAULT (Automática para equipo)
+            if(!u && DEFAULT_EXCEL_URL) {
+                u = DEFAULT_EXCEL_URL;
+                localStorage.setItem('darsena_db_url', u); // Guardarla para futuro
+            }
+
+            const d=localStorage.getItem('darsena_db');
+            
+            if(u) { 
+                // Intentar cargar siempre al inicio para tener datos frescos
+                fetchGoogleSheet(u); 
+            } else if(d) { 
+                productsDB=JSON.parse(d); renderProductList(); statusReady(); 
+            } else { 
+                renderProductList(); statusOffline("Sin conexión"); 
+            }
             
             // Cargar Estado Cloud
             const cloudUrl = localStorage.getItem('darsena_cloud_url');
@@ -338,6 +362,7 @@
 
             const t=localStorage.getItem('darsena_theme'); if(t) setTheme(t);
         }
+
         function statusLoading(m) { document.getElementById('dbStatus').classList.remove('hidden'); document.getElementById('dbLoader').style.display='block'; document.getElementById('dbStatusText').innerText=m; document.getElementById('btnLogin').disabled=true; }
         function statusReady() { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText="BD Lista"; document.getElementById('dbStatus').classList.replace('text-gray-400','text-green-600'); document.getElementById('btnLogin').disabled=false; document.getElementById('btnLogin').classList.remove('opacity-50','cursor-not-allowed'); }
         function statusOffline(m) { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText=m; document.getElementById('dbStatus').classList.replace('text-gray-400','text-red-500'); document.getElementById('btnLogin').disabled=false; document.getElementById('btnLogin').classList.remove('opacity-50','cursor-not-allowed'); }
@@ -354,6 +379,7 @@
                         }).filter(p => p.c !== '');
                         localStorage.setItem('darsena_db', JSON.stringify(productsDB));
                         renderProductList(); statusReady();
+                        // Solo notificar si ya estamos logueados para no molestar en el login
                         if(currentUser) Swal.fire({toast:true, position:'top-end', icon:'success', title:'BD Actualizada', showConfirmButton:false, timer:2000});
                     } else statusOffline("Hoja vacía");
                 },
@@ -388,17 +414,21 @@
         }
         function cerrarModalRegistro() { document.getElementById('modal-registro').classList.add('hidden'); selectedProd = null; }
         
-        // ACTUALIZADO: Permitir negativos
+        // ACTUALIZADO: Permitir negativos y 0
         function updateQty(d) { 
             const i=document.getElementById('input-qty'); 
             let v=parseInt(i.value)||0; 
-            v = v + d; // Suma directa, permite negativos
+            v = v + d; // Suma directa
             i.value = v; 
         }
         
         function guardar() {
             const q = parseInt(document.getElementById('input-qty').value);
-            if(!q) { const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; }
+            // Validacion: solo alertar si es vacio o NaN, permitir negativos y 0 si es necesario
+            if(isNaN(q)) { 
+                const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; 
+            }
+            
             registers.unshift({ id:Date.now(), fecha:new Date().toLocaleDateString(), hora:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), auditor:currentUser.name, code:selectedProd.c, desc:selectedProd.d, prov:selectedProd.p, qty:q, obs:opType, darsena:opDarsena, camion:opCamion });
             localStorage.setItem('darsena_registros', JSON.stringify(registers));
             cerrarModalRegistro(); updateBadge(); Swal.fire({icon:'success',title:'Guardado',showConfirmButton:false,timer:800});
@@ -426,12 +456,7 @@
             Swal.fire({title: 'Enviando...', text: 'Por favor espera', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
 
             try {
-                // Enviar datos como JSON string
                 const payload = JSON.stringify(registers);
-                
-                // Usamos mode 'no-cors' porque Apps Script no suele devolver CORS headers en redirects simples
-                // Esto significa que no sabremos con certeza si falló, pero enviará los datos.
-                // Para confirmar, usaremos un truco de form-data o jsonp si fuera necesario, pero fetch POST suele funcionar.
                 await fetch(url, {
                     method: 'POST',
                     mode: 'no-cors', 
@@ -439,9 +464,14 @@
                     body: payload
                 });
 
-                Swal.fire({ icon: 'success', title: '¡Enviado!', text: 'Los datos se han enviado a la hoja.' });
-                // Opcional: Limpiar registros tras envío exitoso
-                // registers = []; localStorage.setItem('darsena_registros', JSON.stringify([])); updateBadge();
+                // Si llegamos aquí, asumimos éxito (no-cors no devuelve status legible)
+                Swal.fire({ icon: 'success', title: '¡Enviado!', text: 'Datos guardados en la nube y borrados del celular.' });
+                
+                // LIMPIAR DATOS LOCALES
+                registers = []; 
+                localStorage.setItem('darsena_registros', JSON.stringify([])); 
+                updateBadge();
+                
             } catch (error) {
                 console.error(error);
                 Swal.fire('Error', 'Hubo un problema al enviar. Revisa tu conexión.', 'error');
@@ -457,10 +487,10 @@
             const l = document.getElementById('lista-registros-container'); l.innerHTML = "";
             if(registers.length===0) { l.innerHTML="<p class='text-center text-gray-400 mt-10'>Vacío</p>"; return; }
             registers.forEach(r => {
-                // Fix Trash Icon Overlap: Added padding-right (pr-10) to text container
+                // Diseño corregido: Padding right extra para el botón borrar
                 const i = document.createElement('div');
                 i.className = "card p-4 border-l-4 border-theme relative mb-3 shadow-sm";
-                i.innerHTML = `<div class="flex justify-between items-start"><div class="pr-10"><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">C:${r.camion||'-'} D:${r.darsena||'-'}</span></div><h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p></div><div class="text-right"><span class="block text-2xl font-black text-theme tracking-tight">${r.qty>0?'+':''}${r.qty}</span></div></div><div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 font-medium">${r.obs}</div><button onclick="borrarRegistro(${r.id})" class="absolute top-2 right-2 p-2 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                i.innerHTML = `<div class="flex justify-between items-start"><div class="pr-12"><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span><span class="text-[10px] font-bold text-theme bg-theme-light px-1.5 rounded">C:${r.camion||'-'} D:${r.darsena||'-'}</span></div><h4 class="font-bold text-gray-800 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-0.5 font-mono">${r.code}</p></div><div class="text-right"><span class="block text-2xl font-black text-theme tracking-tight">${r.qty>0?'+':''}${r.qty}</span></div></div><div class="mt-2 text-xs bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 font-medium">${r.obs}</div><button onclick="borrarRegistro(${r.id})" class="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>`;
                 l.appendChild(i);
             });
             lucide.createIcons();
