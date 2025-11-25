@@ -18,32 +18,29 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <!-- Fuente Inter para un look más moderno -->
+    <!-- Fuente Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- ESTILO PREMIUM V9.0 --- */
+        /* --- ESTILO PREMIUM V9.2 --- */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F3F4F6; /* Gris suave de fondo */
+            background-color: #F3F4F6;
             color: #111827;
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none; /* Evita rebote elástico */
+            overscroll-behavior-y: none;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
         }
         
-        /* Bloqueo de zoom en inputs */
         input, select, textarea, button { font-size: 16px !important; touch-action: manipulation; }
-
-        /* Clases de Utilidad Personalizadas */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         .card-premium {
             background: white;
-            border-radius: 1.5rem; /* Bordes muy redondeados */
+            border-radius: 1.5rem;
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255,255,255,0.5);
         }
@@ -61,44 +58,27 @@
             outline: none;
         }
 
-        /* Botones con feedback táctil */
         .btn-touch { transition: transform 0.1s; }
         .btn-touch:active { transform: scale(0.95); opacity: 0.9; }
 
-        /* Animaciones de entrada */
         .animate-enter { animation: enter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Pantallas */
         .screen { display: none; flex-direction: column; height: 100%; width: 100%; position: absolute; inset: 0; background: #F3F4F6; }
         .screen.active { display: flex; }
 
-        /* Variables Dinámicas */
         :root { --theme-color: #2563EB; --theme-light: #DBEAFE; }
-
-        /* Scanner Video Ajuste */
         #reader video { border-radius: 1.5rem; object-fit: cover; }
     </style>
     <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    colors: { 
-                        theme: 'var(--theme-color)', 
-                        'theme-light': 'var(--theme-light)',
-                        dark: '#111827'
-                    } 
-                } 
-            } 
-        }
+        tailwind.config = { theme: { extend: { colors: { theme: 'var(--theme-color)', 'theme-light': 'var(--theme-light)', dark: '#111827' } } } }
     </script>
 </head>
 <body>
 
-    <!-- ================= PANTALLA LOGIN ================= -->
+    <!-- LOGIN -->
     <div id="screen-login" class="screen active z-50">
         <div class="flex-1 flex flex-col justify-center items-center p-8 relative overflow-hidden">
-            <!-- Decoración de fondo -->
             <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-theme-light/50 to-transparent rounded-b-[3rem]"></div>
             
             <div class="relative z-10 w-full max-w-sm animate-enter">
@@ -118,12 +98,10 @@
                         </div>
                         
                         <button onclick="doLogin()" id="btnLogin" class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl text-lg shadow-xl shadow-gray-900/20 btn-touch flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Iniciar Sesión
-                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            Iniciar Sesión <i data-lucide="arrow-right" class="w-5 h-5"></i>
                         </button>
                     </div>
 
-                    <!-- Indicador de Estado BD -->
                     <div class="mt-6 flex justify-center">
                          <div id="dbStatus" class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
                             <div class="w-2 h-2 bg-gray-300 rounded-full animate-pulse" id="dbLoader"></div>
@@ -142,16 +120,13 @@
         </div>
     </div>
 
-    <!-- ================= PANTALLA PRINCIPAL (APP) ================= -->
+    <!-- APP -->
     <div id="screen-app" class="screen relative">
         
-        <!-- BARRA SUPERIOR (Sticky) -->
         <div class="bg-white/90 backdrop-blur-md px-5 pt-safe-top pb-3 shadow-sm z-30 sticky top-0">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-theme font-bold text-lg border border-gray-200" id="user-avatar">
-                        U
-                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-theme font-bold text-lg border border-gray-200" id="user-avatar">U</div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hola,</p>
                         <h2 id="user-name-display" class="text-lg font-bold text-gray-900 leading-none">Usuario</h2>
@@ -163,13 +138,10 @@
             </div>
         </div>
 
-        <!-- CONTENIDO SCROLLABLE -->
         <div id="main-content" class="flex-1 overflow-y-auto hide-scrollbar">
             
-            <!-- VISTA: REGISTRO (HOME) -->
+            <!-- HOME -->
             <div id="view-home" class="p-5 space-y-6 pb-32 animate-enter">
-                
-                <!-- 1. Tarjeta de Configuración de Carga (Compacta) -->
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center gap-2 mb-3">
                         <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="truck" class="w-4 h-4"></i></div>
@@ -187,48 +159,33 @@
                     </div>
                 </div>
 
-                <!-- 2. Buscador y Escáner -->
                 <div>
                     <div class="flex gap-3 items-stretch h-14">
                         <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-4 flex items-center text-gray-400 pointer-events-none">
-                                <i data-lucide="search" class="w-6 h-6"></i>
-                            </div>
+                            <div class="absolute inset-y-0 left-4 flex items-center text-gray-400 pointer-events-none"><i data-lucide="search" class="w-6 h-6"></i></div>
                             <input type="text" id="search-input" onkeyup="handleSearch(event)" 
                                 placeholder="Buscar producto..." 
                                 class="w-full h-full bg-white rounded-2xl pl-12 pr-10 text-lg font-medium text-gray-800 shadow-sm border-none outline-none focus:ring-2 focus:ring-theme transition-all" 
                                 autocomplete="off">
-                            <button onclick="limpiarBuscador()" id="clear-search" class="absolute inset-y-0 right-3 flex items-center text-gray-300 hidden">
-                                <i data-lucide="x-circle" class="w-5 h-5"></i>
-                            </button>
+                            <button onclick="limpiarBuscador()" id="clear-search" class="absolute inset-y-0 right-3 flex items-center text-gray-300 hidden"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
                         </div>
-                        <button onclick="startScanner()" class="w-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-900/20 btn-touch">
-                            <i data-lucide="scan-line" class="w-6 h-6"></i>
-                        </button>
+                        <button onclick="startScanner()" class="w-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-900/20 btn-touch"><i data-lucide="scan-line" class="w-6 h-6"></i></button>
                     </div>
                     <p class="text-[10px] text-gray-400 text-center mt-2">Busca por nombre, código o escanea la barra</p>
                 </div>
 
-                <!-- Estado BD Vacía -->
                 <div id="db-empty-state" class="hidden py-10 text-center">
-                    <div class="inline-block p-4 bg-white rounded-full shadow-sm mb-3">
-                        <i data-lucide="database" class="w-8 h-8 text-gray-300"></i>
-                    </div>
+                    <div class="inline-block p-4 bg-white rounded-full shadow-sm mb-3"><i data-lucide="database" class="w-8 h-8 text-gray-300"></i></div>
                     <p class="text-sm text-gray-500 font-medium">Cargando productos...</p>
                 </div>
 
-                <!-- 3. Lista de Resultados -->
-                <div id="product-list" class="space-y-3">
-                    <!-- Los items se insertan aquí -->
-                </div>
-
+                <div id="product-list" class="space-y-3"></div>
             </div>
 
-            <!-- VISTA: OPCIONES (SETTINGS) -->
+            <!-- SETTINGS -->
             <div id="view-settings" class="p-5 space-y-6 pb-32 hidden animate-enter">
                 <h1 class="text-2xl font-extrabold text-gray-900">Ajustes</h1>
                 
-                <!-- Bloque Nube -->
                 <section>
                     <h3 class="text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Sincronización</h3>
                     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -244,15 +201,14 @@
                         </button>
                         <div class="p-3 bg-blue-50 flex items-center justify-between text-xs text-blue-700 font-medium">
                             <span>Estado Script:</span>
-                            <div class="flex items-center gap-1">
+                            <span class="flex items-center gap-1" id="cloud-status-container">
                                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                                 <span id="cloud-status">Conectado Auto</span>
-                            </div>
+                            </span>
                         </div>
                     </div>
                 </section>
 
-                <!-- Bloque Local -->
                 <section>
                     <h3 class="text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Datos Locales</h3>
                     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -263,7 +219,6 @@
                             </div>
                             <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-lg" id="badge-count-settings">0</span>
                         </button>
-                        
                         <button onclick="descargarExcel()" class="w-full p-4 flex items-center justify-between border-b border-gray-100 btn-touch hover:bg-gray-50">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i></div>
@@ -271,7 +226,6 @@
                             </div>
                             <i data-lucide="download" class="text-gray-300 w-4 h-4"></i>
                         </button>
-
                         <button onclick="abrirGestionDB()" class="w-full p-4 flex items-center justify-between btn-touch hover:bg-gray-50">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center"><i data-lucide="database" class="w-5 h-5"></i></div>
@@ -284,47 +238,29 @@
                         </button>
                     </div>
                 </section>
-
-                <button onclick="cerrarSesion()" class="w-full py-4 text-red-500 font-bold text-sm bg-white rounded-2xl shadow-sm btn-touch border border-red-50">
-                    Cerrar Sesión Actual
-                </button>
-                
-                <div class="text-center pt-4 pb-10">
-                    <p class="text-[10px] text-gray-400 font-mono">APP CONTROL DÁRSENA v9.0</p>
-                </div>
+                <button onclick="cerrarSesion()" class="w-full py-4 text-red-500 font-bold text-sm bg-white rounded-2xl shadow-sm btn-touch border border-red-50">Cerrar Sesión Actual</button>
+                <div class="text-center pt-4 pb-10"><p class="text-[10px] text-gray-400 font-mono">APP CONTROL DÁRSENA v9.2</p></div>
             </div>
-
         </div>
 
-        <!-- BARRA DE NAVEGACIÓN INFERIOR (Flotante y Premium) -->
+        <!-- BOTTOM NAV -->
         <div class="fixed bottom-6 left-4 right-4 h-16 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center justify-around z-40 max-w-md mx-auto">
             <button onclick="switchTab('home')" id="tab-home" class="flex flex-col items-center justify-center w-16 h-full text-theme transition-all btn-touch relative">
-                <i data-lucide="scan-barcode" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-bold">Registrar</span>
-                <!-- Indicador activo -->
+                <i data-lucide="scan-barcode" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Registrar</span>
                 <div class="absolute bottom-1 w-1 h-1 bg-theme rounded-full"></div>
             </button>
-            
             <div class="w-px h-8 bg-gray-100"></div>
-            
             <button onclick="switchTab('settings')" id="tab-settings" class="flex flex-col items-center justify-center w-16 h-full text-gray-400 transition-all btn-touch relative">
-                <i data-lucide="settings-2" class="w-6 h-6 mb-1"></i>
-                <span class="text-[10px] font-bold">Menú</span>
+                <i data-lucide="settings-2" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Menú</span>
                 <div id="badge-nav" class="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden"></div>
             </button>
         </div>
 
-        <!-- ==================== MODALES Y POPUPS ==================== -->
-
-        <!-- 1. MODAL CANTIDAD (SUPERIOR) -->
+        <!-- MODALS -->
         <div id="modal-registro" class="fixed inset-0 z-50 hidden">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" onclick="cerrarModalRegistro()"></div>
-            
             <div class="absolute bottom-0 w-full bg-white rounded-t-[2rem] p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] modal-enter max-w-md left-0 right-0 mx-auto pb-10">
-                <!-- Handle -->
                 <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
-                
-                <!-- Info Producto -->
                 <div class="flex justify-between items-start mb-8">
                     <div class="flex-1 pr-4">
                         <div class="flex items-center gap-2 mb-2">
@@ -335,61 +271,38 @@
                     </div>
                     <button onclick="cerrarModalRegistro()" class="bg-gray-100 p-2.5 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
-
-                <!-- Input Cantidad Grande -->
                 <div class="flex items-center gap-4 mb-8">
-                    <button onclick="updateQty(-1)" class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 btn-touch">
-                        <i data-lucide="minus" class="w-6 h-6"></i>
-                    </button>
-                    
+                    <button onclick="updateQty(-1)" class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 btn-touch"><i data-lucide="minus" class="w-6 h-6"></i></button>
                     <div class="flex-1 h-20 bg-gray-50 rounded-3xl border-2 border-transparent focus-within:border-theme focus-within:bg-white transition-all flex items-center justify-center relative">
                         <input type="number" id="input-qty" class="bg-transparent w-full h-full text-center text-4xl font-black text-gray-900 outline-none" placeholder="0" inputmode="numeric">
                         <span class="absolute right-4 text-xs font-bold text-gray-400 uppercase">Unid.</span>
                     </div>
-
-                    <button onclick="updateQty(1)" class="w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-900/20 btn-touch">
-                        <i data-lucide="plus" class="w-6 h-6"></i>
-                    </button>
+                    <button onclick="updateQty(1)" class="w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-900/20 btn-touch"><i data-lucide="plus" class="w-6 h-6"></i></button>
                 </div>
-
-                <!-- Botón Confirmar -->
-                <button onclick="guardar()" class="w-full bg-theme text-white font-bold py-5 rounded-2xl text-lg shadow-xl shadow-theme/30 btn-touch flex justify-center items-center gap-2">
-                    <span>Confirmar Sobrante</span>
-                    <i data-lucide="check-circle" class="w-6 h-6"></i>
-                </button>
-                
-                <!-- Campo oculto para la observación fija -->
-                <input type="hidden" id="input-obs" value="Sobrante de mercaderia">
+                <button onclick="guardar()" class="w-full bg-theme text-white font-bold py-5 rounded-2xl text-lg shadow-xl shadow-theme/30 btn-touch flex justify-center items-center gap-2"><span>Confirmar Sobrante</span><i data-lucide="check-circle" class="w-6 h-6"></i></button>
             </div>
         </div>
 
-        <!-- 2. MODAL ESCÁNER FULLSCREEN -->
         <div id="modal-scanner" class="fixed inset-0 z-50 hidden bg-black flex flex-col">
             <div class="flex justify-between items-center p-6 bg-black/80 text-white z-10 absolute top-0 left-0 w-full">
                 <h3 class="font-bold text-lg">Escaneando...</h3>
                 <button onclick="stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            
             <div id="reader" class="flex-1 w-full h-full bg-black"></div>
-            
             <div class="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black to-transparent text-center pb-20">
                 <p class="text-white/80 text-sm font-medium bg-black/50 inline-block px-4 py-2 rounded-full backdrop-blur-md">Apunta la cámara al código de barras</p>
             </div>
         </div>
 
-        <!-- 3. MODAL LISTA REPORTES -->
         <div id="modal-reportes" class="fixed inset-0 z-50 hidden bg-[#F5F5F7]">
             <div class="bg-white pt-safe-top pb-4 px-5 shadow-sm sticky top-0 z-10 flex justify-between items-center">
                 <button onclick="cerrarReportes()" class="flex items-center text-gray-500 font-bold gap-1 p-2 -ml-2 hover:bg-gray-50 rounded-lg transition"><i data-lucide="arrow-left" class="w-5 h-5"></i> Volver</button>
                 <h2 class="font-black text-lg text-gray-900">Registros de Hoy</h2>
                 <div class="w-20"></div>
             </div>
-            <div id="lista-registros-container" class="p-4 space-y-3 overflow-y-auto h-[calc(100%-80px)] pb-32">
-                <!-- Items aquí -->
-            </div>
+            <div id="lista-registros-container" class="p-4 space-y-3 overflow-y-auto h-[calc(100%-80px)] pb-32"></div>
         </div>
 
-        <!-- 4. MODAL GESTIÓN DB (Oculto por defecto) -->
         <div id="modal-db" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm" onclick="if(event.target===this) cerrarModalDB()">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl transform transition-all scale-100">
                 <div class="text-center mb-6">
@@ -405,7 +318,6 @@
             </div>
         </div>
 
-        <!-- 5. MODAL CONFIGURAR CLOUD -->
         <div id="modal-cloud" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm" onclick="if(event.target===this) cerrarModalCloud()">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
                 <h3 class="text-lg font-bold mb-2 text-gray-900">Script de Carga</h3>
@@ -418,9 +330,7 @@
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURACIÓN Y DATOS
-        // ==========================================
+        // CONFIG AUTOMATICA
         const DEFAULT_EXCEL_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7gUS0hLg-DTKmCeLTT9rniA7SLjJAf7kT6Jf76ICN89Skpq5By1V4GQ15YtBugUWE5M1xYJyvZd82/pub?output=csv";
         const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbyRgvVkA2GEEJi3iMXtIF7gEWOSDofajRInTzRWvA9597qH3EdRWGRjwAXcXve761PE/exec";
 
@@ -429,9 +339,6 @@
         let opDarsena = "", opCamion = "";
         let html5QrcodeScanner = null;
 
-        // ==========================================
-        // INICIALIZACIÓN
-        // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons(); 
             loadState(); 
@@ -440,9 +347,6 @@
             if(savedUser) loginUser(JSON.parse(savedUser));
         });
 
-        // ==========================================
-        // LOGICA OPERATIVA
-        // ==========================================
         function saveOpData() { 
             opDarsena = document.getElementById('op-darsena').value; 
             opCamion = document.getElementById('op-camion').value; 
@@ -457,17 +361,16 @@
             document.getElementById('op-camion').value = opCamion; 
         }
 
-        // --- ESCÁNER DE CÁMARA ---
         function startScanner() {
             document.getElementById('modal-scanner').classList.remove('hidden');
             const config = { fps: 10, qrbox: { width: 260, height: 200 }, aspectRatio: 1.0 };
             html5QrcodeScanner = new Html5Qrcode("reader");
             html5QrcodeScanner.start({ facingMode: "environment" }, config,
                 (decodedText) => { stopScanner(); handleScannedCode(decodedText); },
-                (errorMessage) => { /* ignore frame errors */ }
+                (errorMessage) => { }
             ).catch(err => {
                 console.error(err);
-                Swal.fire({icon:'error', title:'Cámara no disponible', text:'Verifica permisos HTTPS', confirmButtonColor:'#111827'});
+                Swal.fire({icon:'error', title:'Error Cámara', text:'Verifica permisos', confirmButtonColor:'#111827'});
                 document.getElementById('modal-scanner').classList.add('hidden');
             });
         }
@@ -482,13 +385,11 @@
             const match = productsDB.find(p => p.b == code || p.c == code);
             if(match) { 
                 openRegisterModal(match); 
-                // Feedback vibración si es soportado
                 if(navigator.vibrate) navigator.vibrate(50);
             }
             else { Swal.fire({ icon: 'warning', title: 'No encontrado', text: `Código: ${code} no existe`, confirmButtonColor:'#111827' }); }
         }
 
-        // --- BUSCADOR ---
         function handleSearch(e) {
             const query = e.target.value.trim();
             const clearBtn = document.getElementById('clear-search');
@@ -501,7 +402,6 @@
         }
         function limpiarBuscador() { document.getElementById('search-input').value = ""; document.getElementById('clear-search').classList.add('hidden'); renderProductList(""); document.getElementById('search-input').focus(); }
 
-        // --- AUTH ---
         function doLogin() { const c = parseInt(document.getElementById('login-code').value); if(USERS[c]) loginUser({id:c, name:USERS[c]}); else Swal.fire({toast:true, position:'top', icon:'error', title:'Código incorrecto', showConfirmButton:false, timer:1500}); }
         
         function loginUser(u) { 
@@ -509,7 +409,6 @@
             document.getElementById('user-name-display').innerText=u.name.split(' ')[0]; 
             document.getElementById('user-avatar').innerText=u.name.charAt(0); 
             document.getElementById('screen-login').classList.remove('active'); 
-            // Animacion suave
             setTimeout(()=>{
                 document.getElementById('screen-app').classList.remove('hidden');
                 document.getElementById('screen-app').classList.add('active');
@@ -522,25 +421,14 @@
         function switchTab(t) { 
             ['home','settings'].forEach(v=>{ 
                 const el=document.getElementById(`view-${v}`), b=document.getElementById(`tab-${v}`); 
-                const icon = b.querySelector('i');
-                const label = b.querySelector('span');
-                const activeIndicator = b.querySelector('.bg-theme'); // El puntito azul
-
-                if(v===t){
-                    el.classList.remove('hidden');
-                    b.classList.replace('text-gray-400','text-theme');
-                    if(activeIndicator) activeIndicator.classList.remove('hidden'); // Mostrar puntito
-                } else {
-                    el.classList.add('hidden');
-                    b.classList.replace('text-theme','text-gray-400');
-                    if(activeIndicator) activeIndicator.classList.add('hidden'); // Ocultar puntito
-                } 
+                const activeIndicator = b.querySelector('.bg-theme'); 
+                if(v===t){ el.classList.remove('hidden'); b.classList.replace('text-gray-400','text-theme'); if(activeIndicator) activeIndicator.classList.remove('hidden'); } 
+                else { el.classList.add('hidden'); b.classList.replace('text-theme','text-gray-400'); if(activeIndicator) activeIndicator.classList.add('hidden'); } 
             }); 
         }
 
         function irAConfiguracion() { switchTab('settings'); setTimeout(()=>abrirGestionDB(),500); }
 
-        // --- DATA LOADING ---
         function loadState() {
             const r=localStorage.getItem('darsena_registros'); if(r) registers=JSON.parse(r); updateBadge();
             
@@ -552,7 +440,8 @@
             
             let cUrl = localStorage.getItem('darsena_cloud_url'); 
             if (!cUrl && DEFAULT_CLOUD_URL) { cUrl = DEFAULT_CLOUD_URL; localStorage.setItem('darsena_cloud_url', cUrl); }
-            // FIX: Add null check before accessing innerText
+            
+            // FIX: Validar existencia del elemento antes de asignar
             const cloudStatusEl = document.getElementById('cloud-status');
             if(cUrl && cloudStatusEl) cloudStatusEl.innerText = "Conectado Automático";
         }
@@ -580,7 +469,9 @@
 
         function renderProductList(filter = "") {
             const c = document.getElementById('product-list'), e = document.getElementById('db-empty-state');
-            c.innerHTML = ""; if(productsDB) document.getElementById('db-count-label').innerText = `${productsDB.length} productos`;
+            const countLabel = document.getElementById('db-count-label');
+            c.innerHTML = ""; 
+            if(productsDB && countLabel) countLabel.innerText = `${productsDB.length} productos`;
 
             if(!productsDB || productsDB.length===0) { e.classList.remove('hidden'); return; } else e.classList.add('hidden');
             
@@ -593,25 +484,12 @@
                 const el = document.createElement('div');
                 el.className = "card-premium p-4 flex justify-between items-center active:scale-[0.99] transition-transform cursor-pointer animate-enter mb-3";
                 el.onclick = () => openRegisterModal(p);
-                el.innerHTML = `
-                    <div class="flex-1 pr-3">
-                        <div class="flex gap-2 mb-1">
-                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.c}</span>
-                            <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.p}</span>
-                        </div>
-                        <h4 class="font-bold text-sm text-gray-900 leading-snug">${p.d}</h4>
-                        ${p.b ? `<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>` : ''}
-                    </div>
-                    <div class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white shadow-lg shadow-gray-900/20">
-                        <i data-lucide="plus" class="w-5 h-5"></i>
-                    </div>
-                `;
+                el.innerHTML = `<div class="flex-1 pr-3"><div class="flex gap-2 mb-1"><span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.c}</span><span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.p}</span></div><h4 class="font-bold text-sm text-gray-900 leading-snug">${p.d}</h4>${p.b?`<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>`:''}</div><div class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white shadow-lg shadow-gray-900/20"><i data-lucide="plus" class="w-5 h-5"></i></div>`;
                 c.appendChild(el);
             });
             lucide.createIcons();
         }
 
-        // --- MODALES ---
         function openRegisterModal(p) {
             selectedProd = p;
             document.getElementById('modal-code').innerText = p.c; document.getElementById('modal-desc').innerText = p.d; document.getElementById('modal-prov').innerText = p.p;
@@ -630,34 +508,14 @@
         
         function guardar() {
             const q = parseInt(document.getElementById('input-qty').value);
-            if(isNaN(q)) { 
-                const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; 
-            }
-            
-            const obsFixed = "Sobrante de mercaderia"; // TIPO FIJO
-
-            registers.unshift({ 
-                id:Date.now(), 
-                fecha:new Date().toLocaleDateString(), 
-                hora:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
-                auditor:currentUser.name, 
-                code:selectedProd.c, 
-                desc:selectedProd.d, 
-                prov:selectedProd.p, 
-                qty:q, 
-                obs:obsFixed, // SIEMPRE SOBRANTE
-                darsena:opDarsena, 
-                camion:opCamion 
-            });
-            
+            if(isNaN(q)) { const i=document.getElementById('input-qty'); i.parentElement.classList.add('ring-2','ring-red-500'); setTimeout(()=>i.parentElement.classList.remove('ring-2','ring-red-500'),500); return; }
+            const obsFixed = "Sobrante de mercaderia"; 
+            registers.unshift({ id:Date.now(), fecha:new Date().toLocaleDateString(), hora:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), auditor:currentUser.name, code:selectedProd.c, desc:selectedProd.d, prov:selectedProd.p, qty:q, obs:obsFixed, darsena:opDarsena, camion:opCamion });
             localStorage.setItem('darsena_registros', JSON.stringify(registers));
-            cerrarModalRegistro(); 
-            updateBadge(); 
-            
+            cerrarModalRegistro(); updateBadge(); 
             Swal.fire({icon:'success', title:'Guardado', showConfirmButton:false, timer:800, position:'center', width:'200px'});
         }
 
-        // --- REPORTE Y CLOUD ---
         function verReporte() {
             document.getElementById('modal-reportes').classList.remove('hidden');
             const l = document.getElementById('lista-registros-container'); l.innerHTML = "";
@@ -666,50 +524,15 @@
             registers.forEach(r => {
                 const i = document.createElement('div');
                 i.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative mb-3";
-                // DISEÑO ARREGLADO: Espacio derecho grande para el botón basura
-                i.innerHTML = `
-                    <div class="flex justify-between items-start pr-14">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span>
-                                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">D:${r.darsena}</span>
-                            </div>
-                            <h4 class="font-bold text-gray-900 text-sm leading-tight">${r.desc}</h4>
-                            <p class="text-xs text-gray-400 mt-1 font-mono">${r.code}</p>
-                        </div>
-                        <div class="text-right flex flex-col items-end justify-center">
-                            <span class="text-2xl font-black text-gray-900 tracking-tight">${r.qty>0?'+':''}${r.qty}</span>
-                            <span class="text-[9px] font-bold text-gray-400 uppercase">UNID</span>
-                        </div>
-                    </div>
-                    <!-- Botón borrar flotante y grande -->
-                    <button onclick="borrarRegistro(${r.id})" class="absolute top-1/2 -translate-y-1/2 right-4 w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                `;
+                i.innerHTML = `<div class="flex justify-between items-start pr-14"><div><div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${r.hora}</span><span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">D:${r.darsena}</span></div><h4 class="font-bold text-gray-900 text-sm leading-tight">${r.desc}</h4><p class="text-xs text-gray-400 mt-1 font-mono">${r.code}</p></div><div class="text-right flex flex-col items-end justify-center"><span class="text-2xl font-black text-gray-900 tracking-tight">${r.qty>0?'+':''}${r.qty}</span><span class="text-[9px] font-bold text-gray-400 uppercase">UNID</span></div></div><button onclick="borrarRegistro(${r.id})" class="absolute top-1/2 -translate-y-1/2 right-4 w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><i data-lucide="trash-2" class="w-5 h-5"></i></button>`;
                 l.appendChild(i);
             });
             lucide.createIcons();
         }
 
         function borrarRegistro(id) {
-            Swal.fire({
-                title: '¿Eliminar?', 
-                text: "Se borrará este registro.", 
-                icon: 'warning', 
-                showCancelButton: true, 
-                confirmButtonColor: '#EF4444', 
-                cancelButtonColor: '#E5E7EB',
-                confirmButtonText: 'Sí, borrar',
-                cancelButtonText: 'Cancelar',
-                customClass: { cancelButton: 'text-gray-600' }
-            }).then((r)=>{
-                if(r.isConfirmed){
-                    registers=registers.filter(r=>r.id!==id);
-                    localStorage.setItem('darsena_registros',JSON.stringify(registers));
-                    verReporte();
-                    updateBadge();
-                }
+            Swal.fire({title: '¿Eliminar?', text: "Se borrará este registro.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', cancelButtonColor: '#E5E7EB', confirmButtonText: 'Sí, borrar', cancelButtonText: 'Cancelar', customClass: { cancelButton: 'text-gray-600' }}).then((r)=>{
+                if(r.isConfirmed){ registers=registers.filter(r=>r.id!==id); localStorage.setItem('darsena_registros',JSON.stringify(registers)); verReporte(); updateBadge(); }
             }) 
         }
 
@@ -717,15 +540,12 @@
             const url = localStorage.getItem('darsena_cloud_url');
             if(!url) return Swal.fire('Error', 'Script no conectado.', 'error');
             if(registers.length === 0) return Swal.fire('Vacío', 'Nada que enviar.', 'info');
-
             Swal.fire({title: 'Subiendo...', text:'Por favor espera', allowOutsideClick: false, didOpen: () => { Swal.showLoading() }});
             try {
                 await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(registers) });
                 Swal.fire({ icon: 'success', title: '¡Enviado!', text: 'Datos subidos correctamente.' });
                 registers = []; localStorage.setItem('darsena_registros', JSON.stringify([])); updateBadge();
-            } catch (error) {
-                console.error(error); Swal.fire('Error', 'Fallo de conexión.', 'error');
-            }
+            } catch (error) { console.error(error); Swal.fire('Error', 'Fallo de conexión.', 'error'); }
         }
 
         function updateBadge() { 
@@ -736,7 +556,6 @@
             if(badgeNav) { if(c>0) badgeNav.classList.remove('hidden'); else badgeNav.classList.add('hidden'); }
         }
 
-        // Modales y Utils
         function cerrarReportes() { document.getElementById('modal-reportes').classList.add('hidden'); }
         function abrirGestionDB() { document.getElementById('modal-db').classList.remove('hidden'); }
         function cerrarModalDB() { document.getElementById('modal-db').classList.add('hidden'); }
