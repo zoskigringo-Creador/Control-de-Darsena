@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- ESTILO PREMIUM V9.2 --- */
+        /* --- ESTILO PREMIUM V9.3 --- */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #F3F4F6;
@@ -239,7 +239,7 @@
                     </div>
                 </section>
                 <button onclick="cerrarSesion()" class="w-full py-4 text-red-500 font-bold text-sm bg-white rounded-2xl shadow-sm btn-touch border border-red-50">Cerrar Sesión Actual</button>
-                <div class="text-center pt-4 pb-10"><p class="text-[10px] text-gray-400 font-mono">APP CONTROL DÁRSENA v9.2</p></div>
+                <div class="text-center pt-4 pb-10"><p class="text-[10px] text-gray-400 font-mono">APP CONTROL DÁRSENA v9.3</p></div>
             </div>
         </div>
 
@@ -441,14 +441,44 @@
             let cUrl = localStorage.getItem('darsena_cloud_url'); 
             if (!cUrl && DEFAULT_CLOUD_URL) { cUrl = DEFAULT_CLOUD_URL; localStorage.setItem('darsena_cloud_url', cUrl); }
             
-            // FIX: Validar existencia del elemento antes de asignar
             const cloudStatusEl = document.getElementById('cloud-status');
             if(cUrl && cloudStatusEl) cloudStatusEl.innerText = "Conectado Automático";
         }
 
-        function statusLoading(m) { document.getElementById('dbLoader').style.display='block'; document.getElementById('dbStatusText').innerText=m; document.getElementById('btnLogin').disabled=true; }
-        function statusReady() { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText="SISTEMA ONLINE"; document.getElementById('dbStatus').classList.replace('text-gray-400','text-green-600'); document.getElementById('dbStatus').classList.replace('bg-gray-50','bg-green-50'); document.getElementById('btnLogin').disabled=false; }
-        function statusOffline(m) { document.getElementById('dbLoader').style.display='none'; document.getElementById('dbStatusText').innerText=m; document.getElementById('dbStatus').classList.replace('text-gray-400','text-red-500'); document.getElementById('btnLogin').disabled=false; }
+        function statusLoading(m) { 
+            const dbLoader = document.getElementById('dbLoader');
+            const dbStatusText = document.getElementById('dbStatusText');
+            const btnLogin = document.getElementById('btnLogin');
+            
+            if(dbLoader) dbLoader.style.display='block'; 
+            if(dbStatusText) dbStatusText.innerText=m; 
+            if(btnLogin) btnLogin.disabled=true; 
+        }
+        function statusReady() { 
+            const dbLoader = document.getElementById('dbLoader');
+            const dbStatusText = document.getElementById('dbStatusText');
+            const dbStatus = document.getElementById('dbStatus');
+            const btnLogin = document.getElementById('btnLogin');
+
+            if(dbLoader) dbLoader.style.display='none'; 
+            if(dbStatusText) dbStatusText.innerText="SISTEMA ONLINE"; 
+            if(dbStatus) {
+                dbStatus.classList.replace('text-gray-400','text-green-600'); 
+                dbStatus.classList.replace('bg-gray-50','bg-green-50'); 
+            }
+            if(btnLogin) btnLogin.disabled=false; 
+        }
+        function statusOffline(m) { 
+            const dbLoader = document.getElementById('dbLoader');
+            const dbStatusText = document.getElementById('dbStatusText');
+            const dbStatus = document.getElementById('dbStatus');
+            const btnLogin = document.getElementById('btnLogin');
+
+            if(dbLoader) dbLoader.style.display='none'; 
+            if(dbStatusText) dbStatusText.innerText=m; 
+            if(dbStatus) dbStatus.classList.replace('text-gray-400','text-red-500'); 
+            if(btnLogin) btnLogin.disabled=false; 
+        }
 
         function fetchGoogleSheet(url) {
             statusLoading("Sincronizando...");
@@ -470,22 +500,23 @@
         function renderProductList(filter = "") {
             const c = document.getElementById('product-list'), e = document.getElementById('db-empty-state');
             const countLabel = document.getElementById('db-count-label');
-            c.innerHTML = ""; 
+            
+            if(c) c.innerHTML = ""; 
             if(productsDB && countLabel) countLabel.innerText = `${productsDB.length} productos`;
 
-            if(!productsDB || productsDB.length===0) { e.classList.remove('hidden'); return; } else e.classList.add('hidden');
+            if(!productsDB || productsDB.length===0) { if(e) e.classList.remove('hidden'); return; } else { if(e) e.classList.add('hidden'); }
             
             let cnt=0; const max=50, q=filter.toLowerCase();
             const res = productsDB.filter(p => { if(cnt>=max && q==="") return false; const m = p.d.toLowerCase().includes(q) || p.c.toLowerCase().includes(q) || p.b.includes(q); if(m) cnt++; return m; });
             
-            if(res.length===0) { c.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm font-medium">No se encontraron productos</div>`; return; }
+            if(res.length===0 && c) { c.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm font-medium">No se encontraron productos</div>`; return; }
             
             res.forEach(p => {
                 const el = document.createElement('div');
                 el.className = "card-premium p-4 flex justify-between items-center active:scale-[0.99] transition-transform cursor-pointer animate-enter mb-3";
                 el.onclick = () => openRegisterModal(p);
                 el.innerHTML = `<div class="flex-1 pr-3"><div class="flex gap-2 mb-1"><span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.c}</span><span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md">${p.p}</span></div><h4 class="font-bold text-sm text-gray-900 leading-snug">${p.d}</h4>${p.b?`<p class="text-[10px] text-gray-400 mt-1 font-mono">${p.b}</p>`:''}</div><div class="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white shadow-lg shadow-gray-900/20"><i data-lucide="plus" class="w-5 h-5"></i></div>`;
-                c.appendChild(el);
+                if(c) c.appendChild(el);
             });
             lucide.createIcons();
         }
